@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ChevronLeftIcon from '../assets/icons/Calender_chevron-left-md.svg';
 import ChevronRightIcon from '../assets/icons/Calender_chevron-right-md.svg';
 import DeleteIcon from '../assets/icons/ModifyPage_Image_Delete.png';
+import UploadPhotoIcon from '../assets/icons/UploadPage_photo.svg';
 import DonutProgress from '../shared/components/DonutProgress';
 import {
   getCards,
@@ -225,7 +226,7 @@ function CreatePage() {
 
         {/* 이미지 업로드란 */}
         <div>
-          <div className="border-1 border-gray-800 h-70 max-h-70 rounded-lg p-5 text-center hover:border-gray-400 transition-colors relative mb-8 overflow-hidden">
+          <div className="border-1 border-gray-800 h-70 max-h-70 rounded-lg p-5 text-center hover:border-gray-400 transition-colors relative mb-8 overflow-hidden bg-[#E2E2E2]">
             {imagePreview ? (
               <div className="h-full flex flex-col justify-between">
                 {/* 삭제 버튼 */}
@@ -266,14 +267,11 @@ function CreatePage() {
               >
                 <div className="flex flex-col items-center justify-center">
                   <div className="w-12 h-12 text-gray-400 mb-2">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
+                    <img
+                      src={UploadPhotoIcon}
+                      alt="Upload Photo"
+                      className="w-12 h-12"
+                    />
                   </div>
                 </div>
               </div>
