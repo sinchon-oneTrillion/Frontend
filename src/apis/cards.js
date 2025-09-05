@@ -12,10 +12,34 @@ const rethrow = (label, err) => {
   );
 };
 
-/** 카드 초기 리스트 선택
+/** 홈: 카드 리스트 조회
+ * GET /api/cards/{nickname}
+ * res: { httpStatus, userId, cards: [{list:string, achieve:boolean}, ...] }
+ */
+export const getCards = async (nickname) => {
+  if (!nickname) throw new Error('닉네임이 필요합니다');
+  const url = `/api/cards/${encodeURIComponent(nickname)}`;
+
+  console.groupCollapsed('%c[API REQ] getCards', 'color:#0ea5e9');
+  console.log('→ url:', url);
+  console.groupEnd();
+
+  try {
+    const { data, status } = await client.get(url);
+    console.groupCollapsed('%c[API RES] getCards', 'color:#22c55e');
+    console.log('✓ status:', status);
+    console.log('✓ data:', data); // { httpStatus, userId, cards:[{list,achieve}] }
+    console.groupEnd();
+    return data;
+  } catch (err) {
+    rethrow('getCards', err);
+  }
+};
+
+/** 온보딩: 카드 초기 선택
  * POST /api/cards/choice/{nickname}
  * body: { cards: string[] }
- * res:  { httpStatus: "CREATED", card_count: number }
+ * res : { httpStatus: "CREATED", card_count: number }
  */
 export const chooseInitialCards = async (nickname, cards = []) => {
   if (!nickname) throw new Error('닉네임이 필요합니다');
@@ -29,12 +53,10 @@ export const chooseInitialCards = async (nickname, cards = []) => {
 
   try {
     const { data, status } = await client.post(url, body);
-
     console.groupCollapsed('%c[API RES] chooseInitialCards', 'color:#22c55e');
     console.log('✓ status:', status);
     console.log('✓ data:', data); // { httpStatus, card_count }
     console.groupEnd();
-
     return data;
   } catch (err) {
     rethrow('chooseInitialCards', err);

@@ -14,9 +14,12 @@ const rethrow = (label, err) => {
   );
 };
 
+/** 마이페이지 조회
+ * GET /api/mypage/{nickname}
+ * res: { httpStatus, userId, cards: [{list:string, achieve:boolean}, ...] }
+ */
 export const getMypage = async (nickname) => {
   if (!nickname) throw new Error('에러: 닉네임이 필요합니다');
-
   const url = `/api/mypage/${encodeURIComponent(nickname)}`;
   const params = { nickname };
 
@@ -27,25 +30,27 @@ export const getMypage = async (nickname) => {
 
   try {
     const { data, status } = await client.get(url, { params });
-
     console.groupCollapsed('%c[API RES] getMypage', 'color:#22c55e');
     console.log('✓ status:', status);
     console.log('✓ data:', data);
     console.groupEnd();
-
-    return data; // { status, message, nickname, cards }
+    return data; // { httpStatus, userId, cards:[{list,achieve}] }
   } catch (err) {
     rethrow('getMypage', err);
   }
 };
 
+/** 마이페이지 수정
+ * PATCH /api/mypage/{nickname}
+ * body: { nickname, add_cards: string[], remove_cards: string[] }
+ * res : { status, message, nickname, cards: string[] }
+ */
 export const patchMypage = async (
   nickname,
   add_cards = [],
   remove_cards = []
 ) => {
   if (!nickname) throw new Error('닉네임이 필요합니다');
-
   const url = `/api/mypage/${encodeURIComponent(nickname)}`;
   const body = {
     nickname,
@@ -60,12 +65,10 @@ export const patchMypage = async (
 
   try {
     const { data, status } = await client.patch(url, body);
-
     console.groupCollapsed('%c[API RES] patchMypage', 'color:#22c55e');
     console.log('✓ status:', status);
     console.log('✓ data:', data);
     console.groupEnd();
-
     return data; // { status, message, nickname, cards }
   } catch (err) {
     rethrow('patchMypage', err);

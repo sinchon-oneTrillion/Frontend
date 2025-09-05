@@ -5,9 +5,11 @@ import Container from '../../shared/components/layouts/Container';
 import { chooseInitialCards } from '../../apis/cards';
 
 const OPTIONS = [
-  { id: 'a', label: '검은 콩 먹기' },
-  { id: 'b', label: '두피마사지 10번 하기' },
-  { id: 'c', label: '하루 물 2L 마시기' },
+  { id: 'a', label: '두피 5분 마사지 하기' },
+  { id: 'b', label: '비오틴 포함 영양제 챙겨먹기' },
+  { id: 'c', label: '견과류 한 줌 먹기' },
+  { id: 'd', label: '두피 자외선 차단하기' },
+  { id: 'e', label: '오늘 하루 기분 일기 쓰기' },
 ];
 
 export default function SelectView() {
