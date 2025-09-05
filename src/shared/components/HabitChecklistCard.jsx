@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getHabitCards, completeHabitCards } from '../../apis/home';
 
-const imgRadioBase = "https://localhost:3845/assets/13fe777cd0f71483e930b356d82512fc8e0b1e3b.svg";
-const imgRadioDot = "https://localhost:3845/assets/89f47b654e0d2e8c8d2fefec52602ce7d519887e.svg";
+const imgRadioBase = "http://localhost:3845/assets/13fe777cd0f71483e930b356d82512fc8e0b1e3b.svg";
+const imgRadioDot = "http://localhost:3845/assets/89f47b654e0d2e8c8d2fefec52602ce7d519887e.svg";
 
 const RadioButton = ({ checked, onClick }) => {
   return (
