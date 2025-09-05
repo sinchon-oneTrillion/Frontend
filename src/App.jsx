@@ -11,6 +11,7 @@ import Mypage from './pages/Mypage';
 import CalendarPage from './pages/CalenderPage';
 import ModifyPage from './pages/Cal_ModifyPage';
 import DetailPage from './pages/Cal_DetailPage';
+import Splash from './pages/Splash';
 
 function NotFound() {
   return <div style={{ padding: 24 }}>Not Found</div>;
@@ -21,6 +22,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
+          <Route path="/" element={<Splash next="/onboarding" />} />
           <Route path="/home" element={<Home />} />
           <Route path="/onboarding" element={<Landing />} />
           <Route path="/onboarding/signup" element={<Signup />} />

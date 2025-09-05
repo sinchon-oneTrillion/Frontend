@@ -1,6 +1,7 @@
 // src/pages/Mypage.jsx
 import { useEffect, useMemo, useState } from 'react';
 import Container from '../shared/components/layouts/Container';
+import { getMypage, patchMypage } from '../apis/mypage';
 
 const ALL_CARDS = [
   '검은 콩 먹기',
@@ -19,44 +20,24 @@ export default function Mypage() {
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [errorMsg, setErrorMsg] = useState(''); // 화면에는 표시하지 않지만 내부적으로만 사용
 
-  // ------- API helpers -------
-  async function fetchMyPage(nick) {
-    const res = await fetch(`/mypage/${encodeURIComponent(nick)}`);
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data?.message || '마이페이지 조회 실패');
-    return data; // { status, message, nickname, cards }
-  }
-
-  async function patchMyPage(nick, addCards, removeCards) {
-    const res = await fetch(`/mypage/${encodeURIComponent(nick)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nickname: nick,
-        add_cards: addCards,
-        remove_cards: removeCards,
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data?.message || '마이페이지 수정 실패');
-    return data; // { status, message, nickname, cards }
-  }
-
-  // ------- 초기 조회 -------
+  // 초기 조회
   useEffect(() => {
     if (!nicknameParam) {
-      setError('닉네임 정보를 찾을 수 없습니다. 온보딩부터 진행해 주세요.');
+      setErrorMsg('닉네임 정보를 찾을 수 없어 임시로 [-]로 표시합니다.');
+      setNickname('');
+      setOrigCards([]);
+      setSelected([]);
       setLoading(false);
       return;
     }
+
     (async () => {
       try {
         setLoading(true);
-        const data = await fetchMyPage(nicknameParam);
-
-        setNickname(data?.nickname || nicknameParam);
+        const data = await getMypage(nicknameParam);
+        setNickname(data?.nickname || '');
 
         const serverCards = Array.isArray(data?.cards) ? data.cards : [];
         const normalizedSet = new Set(serverCards.map(normalize));
@@ -66,15 +47,20 @@ export default function Mypage() {
 
         setOrigCards(initSelected);
         setSelected(initSelected);
+        setErrorMsg('');
       } catch (e) {
-        setError(e?.message || '마이페이지 조회 중 오류가 발생했습니다.');
+        // 실패해도 화면은 계속 렌더. 배너는 안 보임.
+        setErrorMsg(e?.message || '마이페이지 조회 실패.');
+        setNickname('');
+        setOrigCards([]);
+        setSelected([]);
       } finally {
         setLoading(false);
       }
     })();
   }, [nicknameParam]);
 
-  // ------- 선택/비교 -------
+  // 비교/토글
   const selectedSet = useMemo(() => new Set(selected), [selected]);
   const origSet = useMemo(() => new Set(origCards), [origCards]);
 
@@ -88,14 +74,21 @@ export default function Mypage() {
   );
   const hasChanges = addCards.length > 0 || removeCards.length > 0;
 
-  const toggle = (label) => {
+  const toggle = (label) =>
     setSelected((s) =>
       s.includes(label) ? s.filter((x) => x !== label) : [...s, label]
     );
-  };
 
+  // 저장
   const save = async () => {
     if (saving) return;
+
+    if (!nicknameParam) {
+      alert(
+        '닉네임 정보가 없어 저장할 수 없습니다. 로그인/회원가입을 진행해 주세요.'
+      );
+      return;
+    }
 
     if (!hasChanges) {
       alert('수정을 해주세요. (변경된 항목이 없습니다)');
@@ -104,9 +97,15 @@ export default function Mypage() {
 
     try {
       setSaving(true);
-      const data = await patchMyPage(nicknameParam, addCards, removeCards);
 
-      // 서버 최신 상태 동기화
+      console.groupCollapsed('%c[PATCH PAYLOAD]', 'color:#f59e0b');
+      console.log('nickname:', nicknameParam);
+      console.log('add_cards:', addCards);
+      console.log('remove_cards:', removeCards);
+      console.groupEnd();
+
+      const data = await patchMypage(nicknameParam, addCards, removeCards);
+
       const serverCards = Array.isArray(data?.cards) ? data.cards : [];
       const normalizedSet = new Set(serverCards.map(normalize));
       const synced = ALL_CARDS.filter((label) =>
@@ -115,10 +114,8 @@ export default function Mypage() {
 
       setOrigCards(synced);
       setSelected(synced);
-      setNickname(data?.nickname || nicknameParam);
-
-      // 성공 후 메인으로
-      window.location.href = '/';
+      setNickname(data?.nickname || '');
+      alert('수정이 반영되었습니다.');
     } catch (e) {
       alert(e?.message || '저장 중 오류가 발생했습니다.');
     } finally {
@@ -126,7 +123,6 @@ export default function Mypage() {
     }
   };
 
-  // ------- UI -------
   if (loading) {
     return (
       <Container className="max-w-[720px] mx-auto">
@@ -134,30 +130,20 @@ export default function Mypage() {
       </Container>
     );
   }
-  if (error) {
-    return (
-      <Container className="max-w-[720px] mx-auto">
-        <div className="py-10 text-red-600">{error}</div>
-      </Container>
-    );
-  }
 
   return (
-    <Container className="max-w-[720px] mx-auto">
-      {/* 닉네임(서버 값) */}
-      <section className="mb-8">
+    <Container className="max-w-[720px] mx-auto !pt-16 md:!pt-20">
+      <section className="-mt-2 mb-8">
         <h2 className="mb-2 text-base text-gray-700">닉네임</h2>
-        <div className="text-xl font-semibold tracking-[0.25em] uppercase">
-          {nickname || '-'}
+        <div className="text-[20px] font-light tracking-[0.25em] uppercase text-gray-400">
+          {nickname && nickname.trim() ? nickname : '로그인을 해주세요'}
         </div>
       </section>
 
-      {/* 제목 */}
-      <h3 className="mb-6 text-[18px] font-semibold">
-        내가 형성하고 싶은 습관 <text className="text-red-500">[수정하기]</text>
+      <h3 className="mb-6 text-[18px] font-semibold whitespace-nowrap">
+        내가 형성하고 싶은 습관 <span className="text-red-500">[수정하기]</span>
       </h3>
 
-      {/* 카드 리스트: 항상 토글 가능 */}
       <ul className="space-y-4">
         {ALL_CARDS.map((label) => {
           const active = selectedSet.has(label);
@@ -179,7 +165,6 @@ export default function Mypage() {
         })}
       </ul>
 
-      {/* 저장(서버 반영) */}
       <div className="mt-12 flex items-center justify-center">
         <button
           type="button"

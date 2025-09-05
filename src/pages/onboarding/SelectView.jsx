@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '../../shared/components/layouts/Container';
+import { chooseInitialCards } from '../../apis/cards';
 
 const OPTIONS = [
   { id: 'a', label: '검은 콩 먹기' },
@@ -14,61 +15,86 @@ export default function SelectView() {
   const [selected, setSelected] = useState(
     JSON.parse(localStorage.getItem('onboarding_choices') || '[]')
   );
+  const [saving, setSaving] = useState(false);
 
   const toggle = (label) =>
     setSelected((s) =>
       s.includes(label) ? s.filter((x) => x !== label) : [...s, label]
     );
 
-  function saveAndGo() {
-    localStorage.setItem('onboarding_choices', JSON.stringify(selected));
-    navigate('/main');
+  async function saveAndGo() {
+    if (!selected.length || saving) return;
+
+    const nickname = localStorage.getItem('onboarding_nickname') || '';
+    if (!nickname) {
+      alert('닉네임 정보가 없습니다. 로그인/회원가입 후 진행해 주세요.');
+      navigate('/onboarding');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      // 선택값 서버 반영이 필요하면 유지
+      await chooseInitialCards(nickname, selected);
+      localStorage.setItem('onboarding_choices', JSON.stringify(selected));
+      navigate('/home');
+    } catch (e) {
+      alert(e?.message || '저장 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <Container>
-      <h1 className="mb-10 text-center text-[30px] leading-[36px] font-semibold">
-        내가 형성하고 싶은 습관
+    <Container className="max-w-[375px] mx-auto">
+      <h1 className="mb-10 text-center text-[20px] leading-[36px] font-medium">
+        내가 형성하고 싶은 습관은?
       </h1>
 
-      <ul className="grid grid-cols-1 gap-3 max-w-md mx-auto">
+      <ul className="grid grid-cols-1 gap-3 max-w-md mx-auto place-items-center">
         {OPTIONS.map((o) => {
           const active = selected.includes(o.label);
           return (
             <li
               key={o.id}
               onClick={() => toggle(o.label)}
-              className={`relative w-full cursor-pointer rounded-xl border p-4 transition
-                ${active ? 'border-black bg-black/5' : 'border-gray-300 hover:bg-gray-50'}`}
+              className={`flex w-[283px] h-[44px] items-center  border p-4 cursor-pointer transition
+                          bg-white shadow-sm
+                          ${active ? 'border-black/70' : 'border-gray-300 hover:bg-gray-50'}`}
             >
-              <span className="text-sm pr-10">{o.label}</span>
               <span
                 aria-hidden
-                className={`absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full border
-                  ${active ? 'border-black bg-black' : 'border-gray-300 bg-white'}`}
-              />
+                className={`mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full border
+                            ${active ? 'border-black' : 'border-gray-400'}`}
+              >
+                {active && <span className="h-3 w-3 rounded-full bg-black" />}
+              </span>
+
+              <span className="text-sm">{o.label}</span>
             </li>
           );
         })}
       </ul>
 
       <div className="mt-10 flex items-center justify-center gap-6">
-        <a
-          href="/onboarding"
-          className="h-12 w-36 rounded-lg bg-gray-300 text-white uppercase tracking-[0.2em] font-semibold flex items-center justify-center"
+        <button
+          type="button"
+          onClick={() => navigate('/onboarding')}
+          className="h-[36px] w-[85px] rounded-lg bg-white text-[#020202] uppercase tracking-[0.2em] font-semibold border border-black"
         >
-          이전
-        </a>
+          뒤로
+        </button>
+
         <button
           onClick={saveAndGo}
-          disabled={!selected.length}
-          className={`h-12 w-36 rounded-lg text-white uppercase tracking-[0.2em] font-semibold ${
-            selected.length
+          disabled={!selected.length || saving}
+          className={`h-[36px] w-[85px] rounded-lg bg-black text-white font-semibold ${
+            selected.length && !saving
               ? 'bg-black hover:opacity-90'
               : 'bg-gray-400 cursor-not-allowed'
           }`}
         >
-          완료
+          {saving ? '저장 중…' : '완료'}
         </button>
       </div>
     </Container>
