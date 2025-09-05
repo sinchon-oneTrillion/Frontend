@@ -8,6 +8,9 @@ import Signup from './pages/onboarding/Signup';
 import Login from './pages/onboarding/Login';
 import SelectView from './pages/onboarding/SelectView';
 import Mypage from './pages/Mypage';
+import CalendarPage from './pages/CalenderPage';
+import ModifyPage from './pages/Cal_ModifyPage';
+import DetailPage from './pages/Cal_DetailPage';
 
 function NotFound() {
   return <div style={{ padding: 24 }}>Not Found</div>;
@@ -24,11 +27,19 @@ export default function App() {
           <Route path="/onboarding/login" element={<Login />} />
           <Route path="/onboarding/select" element={<SelectView />} />
           <Route path="/mypage" element={<Mypage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route
+            path="/calendar/modify/:nickname/:date"
+            element={<ModifyPage />}
+          />
+          <Route
+            path="/calendar/detail/:nickname/:date"
+            element={<DetailPage />}
+          />
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Route>
-      </Routes>                                
+      </Routes>                              
     </BrowserRouter>
   );
 }
-
