@@ -138,15 +138,15 @@ export default function Mypage() {
 
   return (
     <Container className="max-w-[720px] mx-auto !pt-16 md:!pt-20">
-      {/* 에러/안내 배너 (있을 때만 표시)
+      에러/안내 배너 (있을 때만 표시)
       {errorMsg && (
         <div className="mb-4 rounded-md bg-yellow-50 text-yellow-800 px-3 py-2 text-sm">
           {errorMsg}
         </div>
-      )} */}
+      )}
       <section className="-mt-2 mb-8">
         <h2 className="mb-2 text-base text-gray-700">닉네임</h2>
-        <div className="text-[20px] font-light uppercase text-gray-400">
+        <div className="text-[20px] font-light tracking-[0.25em] uppercase text-gray-400">
           {nickname && nickname.trim() ? nickname : '로그인을 해주세요'}
         </div>
       </section>

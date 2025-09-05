@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '../Container';
-import { signup, login } from '../../../../apis/auth'; // 경로 확인!
+import { signup, login } from '../../../../apis/auth';
 
 function getUUID() {
   if (typeof window === 'undefined') return '';
@@ -55,14 +55,14 @@ export default function NicknameForm({ mode = 'signup' }) {
         }
         localStorage.setItem('onboarding_nickname', nn);
         localStorage.setItem('auth_mode', 'signup');
-        localStorage.removeItem('onboarding_choices'); // 신규가입 초기화
+        localStorage.removeItem('onboarding_choices');
         navigate('/onboarding/select');
       } else {
         const res = await login(nn); // POST /api/users/login
         console.log('[Login Response]', res);
         localStorage.setItem('onboarding_nickname', res?.nickname || nn);
         localStorage.setItem('auth_mode', 'login');
-        navigate('/home'); // 로그인은 메인으로
+        navigate('/home');
       }
     } catch (err) {
       alert(err.message || '요청 실패');
