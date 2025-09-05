@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import Container from '../../shared/components/layouts/Container';
+import { useNavigate } from 'react-router-dom';
+import Container from '../Container';
 
 function getUUID() {
   if (typeof window === 'undefined') return '';
@@ -19,28 +20,37 @@ function validate(n) {
   return '';
 }
 
-export default function Nickname() {
+/** props.mode: "signup" | "login" */
+export default function NicknameForm({ mode = 'signup' }) {
+  const navigate = useNavigate();
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const uuid = useMemo(() => getUUID(), []);
-  const canSubmit =
-    !error && nickname.trim().length >= 2 && nickname.trim().length <= 12;
+
+  const title = mode === 'signup' ? '닉네임으로 회원가입' : '닉네임으로 로그인';
+  const buttonText = mode === 'signup' ? '회원가입' : '로그인';
 
   function handleSubmit(e) {
     e.preventDefault();
     const msg = validate(nickname);
     if (msg) return setError(msg);
-    localStorage.setItem('onboarding_nickname', nickname.trim());
-    window.location.href = '/onboarding/select';
+
+    setLoading(true);
+    const nn = nickname.trim();
+    localStorage.setItem('auth_mode', mode);
+    localStorage.setItem('onboarding_nickname', nn);
+    const nextPath = mode === 'login' ? '/main' : '/onboarding/select';
+    setTimeout(() => navigate(nextPath), 100);
   }
 
   return (
-    <Container>
+    <Container className="max-w-[375px] mx-auto">
       <h1 className="mb-10 text-center text-[30px] leading-[36px] font-semibold">
-        닉네임을 입력해주세요
+        {title}
       </h1>
 
-      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-md">
+      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[375px]">
         <input
           type="text"
           placeholder="NICKNAME"
@@ -54,27 +64,26 @@ export default function Nickname() {
                      tracking-[0.25em] placeholder-gray-400 text-gray-700 outline-none"
         />
 
-        <div className="mt-12 flex items-center justify-center gap-6">
-          <a
-            href="/"
-            className="h-12 w-36 rounded-lg bg-gray-300 text-white uppercase tracking-[0.2em] font-semibold flex items-center justify-center"
+        <div className="mt-10 flex items-center justify-center gap-4">
+          <button
+            type="button"
+            onClick={() => navigate('/onboarding')}
+            className="h-12 w-36 rounded-lg bg-gray-300 text-white uppercase tracking-[0.2em] font-semibold"
           >
-            버튼1
-          </a>
+            뒤로
+          </button>
           <button
             type="submit"
-            disabled={!canSubmit}
+            disabled={!!error || nickname.trim().length < 2 || loading}
             className={`h-12 w-36 rounded-lg text-white uppercase tracking-[0.2em] font-semibold ${
-              canSubmit
+              !error && nickname.trim().length >= 2 && !loading
                 ? 'bg-black hover:opacity-90'
                 : 'bg-gray-400 cursor-not-allowed'
             }`}
           >
-            다음
+            {loading ? '처리 중…' : buttonText}
           </button>
         </div>
-
-        <p className="mt-4 text-center text-xs text-gray-400">UUID: {uuid}</p>
       </form>
     </Container>
   );

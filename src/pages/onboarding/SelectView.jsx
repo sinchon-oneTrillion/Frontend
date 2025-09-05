@@ -1,4 +1,6 @@
+// src/pages/onboarding/SelectView.jsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Container from '../../shared/components/layouts/Container';
 
 const OPTIONS = [
@@ -8,6 +10,7 @@ const OPTIONS = [
 ];
 
 export default function SelectView() {
+  const navigate = useNavigate();
   const [selected, setSelected] = useState(
     JSON.parse(localStorage.getItem('onboarding_choices') || '[]')
   );
@@ -19,7 +22,7 @@ export default function SelectView() {
 
   function saveAndGo() {
     localStorage.setItem('onboarding_choices', JSON.stringify(selected));
-    window.location.href = '/mypage';
+    navigate('/main');
   }
 
   return (

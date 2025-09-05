@@ -1,29 +1,34 @@
+// src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 
-import { Layout } from './shared/components/layouts/Layout';
-
-import { Home } from './pages/Home';
-import OnboardingLayout from './pages/onboarding/Layout';
-import OnboardingIndex from './pages/onboarding/index';
+import Landing from './pages/onboarding/Landing';
+import Signup from './pages/onboarding/Signup';
+import Login from './pages/onboarding/Login';
 import SelectView from './pages/onboarding/SelectView';
-// import Mypage from './pages/Mypage/page';
+import Mypage from './pages/Mypage';
+
+function NotFound() {
+  return <div style={{ padding: 24 }}>Not Found</div>;
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/onboarding" element={<OnboardingLayout />}>
-            <Route index element={<OnboardingIndex />} />
-            <Route path="select" element={<SelectView />} />
-          </Route>
-          {/* <Route path="/mypage" element={<Mypage />} /> */}
-          <Route path="*" element={<div>Not Found</div>} />
-        </Route>
+        <Route path="/" element={<Landing />} />
+        <Route path="/onboarding" element={<Landing />} />
+
+        <Route path="/onboarding/signup" element={<Signup />} />
+        <Route path="/onboarding/login" element={<Login />} />
+
+        <Route path="/onboarding/select" element={<SelectView />} />
+
+        <Route path="/mypage" element={<Mypage />} />
+
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
 }
-export default App;
