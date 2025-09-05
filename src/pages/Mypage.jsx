@@ -5,10 +5,11 @@ import Container from '../shared/components/layouts/Container';
 import { getMypage, patchMypage } from '../apis/mypage';
 
 const ALL_CARDS = [
-  '검은 콩 먹기',
-  '두피마사지 10번 하기',
-  '하루 물 2L 마시기',
-  '머리에게 칭찬하기',
+  '두피 5분 마사지 하기',
+  '비오틴 포함 영양제 챙겨먹기',
+  '견과류 한 줌 먹기',
+  '두피 자외선 차단하기',
+  '오늘 하루 기분 일기 쓰기',
 ];
 
 const normalize = (s) => (s || '').replace(/\s+/g, '').trim();
