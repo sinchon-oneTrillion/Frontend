@@ -143,9 +143,9 @@ export default function Mypage() {
   }
 
   return (
-    <Container className="max-w-[720px] mx-auto">
+    <Container className="max-w-[720px] mx-auto !pt-16 md:!pt-20">
       {/* 닉네임(서버 값) */}
-      <section className="mb-8">
+      <section className="-mt-4 mb-8">
         <h2 className="mb-2 text-base text-gray-700">닉네임</h2>
         <div className="text-xl font-semibold tracking-[0.25em] uppercase">
           {nickname || '-'}
@@ -153,7 +153,7 @@ export default function Mypage() {
       </section>
 
       {/* 제목 */}
-      <h3 className="mb-6 text-[18px] font-semibold">
+      <h3 className="mt-6 mb-6 text-[18px] font-semibold">
         내가 형성하고 싶은 습관 <text className="text-red-500">[수정하기]</text>
       </h3>
 
