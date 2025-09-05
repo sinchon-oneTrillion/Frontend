@@ -1,32 +1,29 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
-import { Login } from './pages/Login';
-import { Home } from './pages/Home';
-import CalendarPage from './pages/CalenderPage';
-import ModifyPage from './pages/Cal_ModifyPage';
-import DetailPage from './pages/Cal_DetailPage';
 
-function App() {
+import { Layout } from './shared/components/layouts/Layout';
+
+import { Home } from './pages/Home';
+import OnboardingLayout from './pages/onboarding/Layout';
+import OnboardingIndex from './pages/onboarding/index';
+import SelectView from './pages/onboarding/SelectView';
+// import Mypage from './pages/Mypage/page';
+
+export default function App() {
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route index element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route
-            path="/calendar/modify/:nickname/:date"
-            element={<ModifyPage />}
-          />
-          <Route
-            path="/calendar/detail/:nickname/:date"
-            element={<DetailPage />}
-          />
-        </Routes>
-      </div>
-    </Router>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/onboarding" element={<OnboardingLayout />}>
+            <Route index element={<OnboardingIndex />} />
+            <Route path="select" element={<SelectView />} />
+          </Route>
+          {/* <Route path="/mypage" element={<Mypage />} /> */}
+          <Route path="*" element={<div>Not Found</div>} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
-
 export default App;
