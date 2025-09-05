@@ -132,9 +132,12 @@ export default function Mypage() {
   }
 
   return (
-    <Container className="max-w-[720px] mx-auto !pt-16 md:!pt-20">
+    <Container
+      className="max-w-[720px] mx-auto !pt-16 md:!pt-20"
+      bgClassName={'bg-gradient-to-b from-[#FFF600] to-[#FFBC2B]'}
+    >
       <section className="-mt-2 mb-8">
-        <h2 className="mb-2 text-base text-gray-700">닉네임</h2>
+        <h2 className="mb-2 text-base text-gray-700 justify-center">닉네임</h2>
         <div className="text-[20px] font-light tracking-[0.25em] uppercase text-gray-400">
           {nickname && nickname.trim() ? nickname : '로그인을 해주세요'}
         </div>
