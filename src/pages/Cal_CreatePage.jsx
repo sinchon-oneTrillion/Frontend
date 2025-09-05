@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ChevronLeftIcon from '../assets/icons/Calender_chevron-left-md.svg';
 import ChevronRightIcon from '../assets/icons/Calender_chevron-right-md.svg';
 import DeleteIcon from '../assets/icons/ModifyPage_Image_Delete.png';
@@ -13,7 +13,8 @@ import {
 } from '../apis/calendar';
 
 function CreatePage() {
-  const { nickname, date } = useParams();
+  const { nickname } = useParams(); // date는 URL 파라미터에서 제거됨
+  const location = useLocation(); // state에서 date 받아오기
   const navigate = useNavigate();
   const [memo, setMemo] = useState('');
   const [imageFile, setImageFile] = useState(null);
@@ -23,8 +24,12 @@ function CreatePage() {
   const [completedCards, setCompletedCards] = useState([]);
   const containerRef = useRef(null);
 
+  // state에서 선택된 날짜 가져오기, 없으면 오늘 날짜
+  const selectedDate =
+    location.state?.selectedDate || new Date().toISOString().split('T')[0];
+
   // 날짜 문자열을 Date 객체로
-  const currentDate = new Date(date);
+  const currentDate = new Date(selectedDate);
 
   // 날짜를 월/일 형태로
   const formatDate = (dateString) => {
@@ -76,11 +81,14 @@ function CreatePage() {
   }, [nickname]);
 
   // 전날 이동
+  // 전날 이동
   const prevDate = () => {
     const prevDay = new Date(currentDate);
     prevDay.setDate(prevDay.getDate() - 1);
     const prevDateString = prevDay.toISOString().split('T')[0];
-    navigate(`/calendar/create/${nickname}/${prevDateString}`);
+    navigate(`/calendar/create/${nickname}`, {
+      state: { selectedDate: prevDateString },
+    });
   };
 
   // 다음날 이동
@@ -88,7 +96,9 @@ function CreatePage() {
     const nextDay = new Date(currentDate);
     nextDay.setDate(nextDay.getDate() + 1);
     const nextDateString = nextDay.toISOString().split('T')[0];
-    navigate(`/calendar/create/${nickname}/${nextDateString}`);
+    navigate(`/calendar/create/${nickname}`, {
+      state: { selectedDate: nextDateString },
+    });
   };
 
   // 이미지 파일 선택 핸들러
@@ -136,12 +146,12 @@ function CreatePage() {
       const data = await createCalendarDetail(nickname, {
         picture: pictureUrl, // null이면 이미지 없음으로 처리
         memo: memo,
-        date: date,
+        date: selectedDate, // selectedDate 사용
       });
 
       if (data.status === 201) {
         // 성공시 상세 페이지로 이동
-        navigate(`/calendar/detail/${nickname}/${date}`, {
+        navigate(`/calendar/detail/${nickname}/${selectedDate}`, {
           state: {
             picture: data.picture,
             memo: data.memo,
@@ -198,7 +208,9 @@ function CreatePage() {
           <img src={ChevronLeftIcon} alt="Previous Date" className="w-5 h-5" />
         </button>
         <div className="text-center">
-          <h1 className="text-xl font-bold text-black">{formatDate(date)}</h1>
+          <h1 className="text-xl font-bold text-black">
+            {formatDate(selectedDate)}
+          </h1>
         </div>
         <button
           onClick={nextDate}
