@@ -30,7 +30,7 @@ export default function OnboardingIndex() {
     <div>
 
         <h1 className="mb-10 text-center text-[30px] leading-[36px] font-semibold">
-        닉네임을 입력해주세요
+        회원가입
       </h1>
       <form
         onSubmit={(e) => {
