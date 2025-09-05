@@ -90,14 +90,13 @@ function BottomNavbar() {
 }
 
 function TopNavbar() {
-  // TODO: 실제 로그인 시스템과 연동하여 nickname 가져오기
-  const nickname = "사용자닉네임"; // 임시 데이터
+
   
   return (
     <div className="bg-white content-stretch flex flex-col items-start justify-start fixed top-0 left-0 right-0 z-50">
       <div className="content-stretch flex items-center justify-center relative shrink-0 w-full h-16">
         <div className="font-['Roboto:Medium',_sans-serif] font-medium text-[#212121] text-lg">
-          {nickname}
+          캐치새치
         </div>
       </div>
       <div className="bg-[#020202] h-px shrink-0 w-full" />
