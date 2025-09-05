@@ -1,7 +1,7 @@
 // src/pages/Splash.jsx
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/logo.png';
+import logo from '../assets/logo.svg';
 
 export default function Splash({ next = '/onboarding', duration = 2000 }) {
   const navigate = useNavigate();

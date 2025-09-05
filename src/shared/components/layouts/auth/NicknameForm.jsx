@@ -1,6 +1,8 @@
+// src/shared/components/layouts/auth/NicknameForm.jsx
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '../Container';
+import { signup, login } from '../../../../apis/auth';
 
 function getUUID() {
   if (typeof window === 'undefined') return '';
@@ -12,6 +14,7 @@ function getUUID() {
   }
   return v;
 }
+
 function validate(n) {
   const t = n.trim();
   const re = /^[a-zA-Z0-9가-힣_-]{2,12}$/;
@@ -28,20 +31,61 @@ export default function NicknameForm({ mode = 'signup' }) {
   const [loading, setLoading] = useState(false);
   const uuid = useMemo(() => getUUID(), []);
 
-  const title = mode === 'signup' ? '닉네임으로 회원가입' : '닉네임으로 로그인';
+  const title = mode === 'signup' ? '회원가입' : '로그인';
   const buttonText = mode === 'signup' ? '회원가입' : '로그인';
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    const msg = validate(nickname);
-    if (msg) return setError(msg);
 
-    setLoading(true);
+    const msg = validate(nickname);
+    if (msg) {
+      setError(msg);
+      return;
+    }
+
     const nn = nickname.trim();
-    localStorage.setItem('auth_mode', mode);
-    localStorage.setItem('onboarding_nickname', nn);
-    const nextPath = mode === 'login' ? '/main' : '/onboarding/select';
-    setTimeout(() => navigate(nextPath), 100);
+    setLoading(true);
+
+    try {
+      if (mode === 'signup') {
+        const res = await signup(nn); // POST /api/users/signup
+        console.log('[Signup Response]', res);
+        if (typeof res?.user_id !== 'undefined') {
+          localStorage.setItem('onboarding_user_id', String(res.user_id));
+        }
+        localStorage.setItem('onboarding_nickname', nn);
+        localStorage.setItem('auth_mode', 'signup');
+        localStorage.removeItem('onboarding_choices');
+        navigate('/onboarding/select');
+      } else {
+        const res = await login(nn); // POST /api/users/login
+        console.log('[Login Response]', res);
+        localStorage.setItem('onboarding_nickname', res?.nickname || nn);
+        localStorage.setItem('auth_mode', 'login');
+        navigate('/home');
+      }
+    } catch (err) {
+      // ---- 에러 분기 처리 ----
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.message || err?.message || '';
+
+      if (
+        mode === 'login' &&
+        (status === 404 ||
+          /not\s*found|존재하지|없(습니다|어요)/i.test(serverMsg))
+      ) {
+        alert('등록되어있지 않은 유저입니다. 회원가입을 해주세요.');
+      } else if (
+        mode === 'signup' &&
+        (status === 409 || /이미|중복|duplicate/i.test(serverMsg))
+      ) {
+        alert('이미 등록되어있는 유저입니다. 다른 닉네임을 입력해주세요.');
+      } else {
+        alert(serverMsg || '요청 실패');
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -68,14 +112,14 @@ export default function NicknameForm({ mode = 'signup' }) {
           <button
             type="button"
             onClick={() => navigate('/onboarding')}
-            className="h-12 w-36 rounded-lg bg-gray-300 text-white uppercase tracking-[0.2em] font-semibold"
+            className="h-[36px] w-[85px] rounded-lg bg-white text-[#020202] uppercase tracking-[0.2em] font-semibold border border-black"
           >
             뒤로
           </button>
           <button
             type="submit"
             disabled={!!error || nickname.trim().length < 2 || loading}
-            className={`h-12 w-36 rounded-lg text-white uppercase tracking-[0.2em] font-semibold ${
+            className={`h-[36px] w-[85px] rounded-lg bg-[#020202] text-white uppercase tracking-[0.2em] font-semibold ${
               !error && nickname.trim().length >= 2 && !loading
                 ? 'bg-black hover:opacity-90'
                 : 'bg-gray-400 cursor-not-allowed'

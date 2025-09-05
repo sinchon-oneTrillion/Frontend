@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getHabitCards, completeHabitCards } from '../../apis/home';
 
-const imgRadioBase = "http://localhost:3845/assets/13fe777cd0f71483e930b356d82512fc8e0b1e3b.svg";
-const imgRadioDot = "http://localhost:3845/assets/89f47b654e0d2e8c8d2fefec52602ce7d519887e.svg";
+const imgRadioBase = "https://localhost:3845/assets/13fe777cd0f71483e930b356d82512fc8e0b1e3b.svg";
+const imgRadioDot = "https://localhost:3845/assets/89f47b654e0d2e8c8d2fefec52602ce7d519887e.svg";
 
 const RadioButton = ({ checked, onClick }) => {
   return (
@@ -22,12 +22,12 @@ const RadioButton = ({ checked, onClick }) => {
   );
 };
 
-export const HabitchecklistCard = ({ onClose }) => {
+export const HabitchecklistCard = ({ onClose, onComplete }) => {
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // 실제 로그인 시스템에서 nickname 가져오기
-  const nickname = "사용자닉네임";
+  const nickname = localStorage.getItem('onboarding_nickname') || "사용자닉네임";
 
   // Mock data for fallback
   const mockHabits = [
@@ -42,15 +42,28 @@ export const HabitchecklistCard = ({ onClose }) => {
     const fetchHabits = async () => {
       try {
         const data = await getHabitCards(nickname);
-        const { cards } = data;
+        console.log('API 응답 데이터:', data);
         
-        const habitsData = cards.map((card, index) => ({
-          id: index + 1,
-          title: card.list,
-          completed: card.achieve
-        }));
-        
-        setHabits(habitsData);
+        // API 응답 구조에 맞게 처리
+        if (data && data.cards && Array.isArray(data.cards)) {
+          const habitsData = data.cards.map((card, index) => ({
+            id: index + 1,
+            title: card.list,
+            completed: card.achieve
+          }));
+          setHabits(habitsData);
+        } else if (data && Array.isArray(data)) {
+          // 만약 data 자체가 배열인 경우
+          const habitsData = data.map((card, index) => ({
+            id: index + 1,
+            title: card.list || card.title,
+            completed: card.achieve || card.completed || false
+          }));
+          setHabits(habitsData);
+        } else {
+          console.log('예상하지 못한 API 응답 구조, mock data 사용');
+          setHabits(mockHabits);
+        }
       } catch (error) {
         console.log('API 연결 실패, mock data 사용:', error);
         // API 연결 실패 시 mock data 사용
@@ -72,18 +85,15 @@ export const HabitchecklistCard = ({ onClose }) => {
   };
 
   const handleSubmit = async () => {
-    const allCompleted = habits.every(habit => habit.completed);
-    
-    if (allCompleted) {
-      try {
-        const completedCards = habits.map(habit => habit.title);
-        await completeHabitCards(nickname, completedCards);
-        alert('오늘도 수고하셨습니다!');
-        onClose();
-      } catch (error) {
-        alert('완료 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
-        console.error('습관 완료 처리 실패:', error);
-      }
+    try {
+      const completedCards = habits.filter(habit => habit.completed).map(habit => habit.title);
+      await completeHabitCards(nickname, completedCards);
+      alert('오늘도 수고하셨습니다!');
+      onComplete();
+    } catch (error) {
+      console.log('API 연결 실패, 로컬에서 완료 처리:', error);
+      alert('오늘도 수고하셨습니다!');
+      onComplete();
     }
   };
 
@@ -109,7 +119,12 @@ export const HabitchecklistCard = ({ onClose }) => {
       className="fixed inset-0 flex items-center justify-center z-50"
       onClick={handleOverlayClick}
     >
-      <div className="bg-white box-border content-stretch flex flex-col gap-[30px] items-center justify-center px-[23px] py-11 relative">
+      <div className="box-border content-stretch flex flex-col gap-[30px] items-center justify-center px-[40px] py-11 relative" style={{
+        borderRadius: '16px',
+        border: '1px solid #020202',
+        background: '#FFF',
+        boxShadow: '0 2px 0 0 #000'
+      }}>
         {/* 닫기 버튼 */}
         <button 
           onClick={onClose}
@@ -118,21 +133,29 @@ export const HabitchecklistCard = ({ onClose }) => {
           >
         ×
         </button>
-        <div aria-hidden="true" className="absolute border border-black border-solid inset-0 pointer-events-none" />
       
       {habits.map((habit) => (
         <div 
           key={habit.id}
-          className="bg-white box-border content-stretch flex gap-2.5 h-[59px] items-center justify-start px-3.5 py-[17px] relative shrink-0 w-60 cursor-pointer"
+          className=" content-stretch flex gap-2.5 h-[59px] items-center justify-start px-3.5 py-[17px] relative shrink-0 w-60 cursor-pointer"
           onClick={() => handleHabitToggle(habit.id)}
         >
-          <div aria-hidden="true" className="absolute border-2 border-[#212121] border-solid inset-0 pointer-events-none" />
           <div className="content-stretch flex gap-3 items-center justify-start relative shrink-0">
             <RadioButton 
               checked={habit.completed}
               onClick={() => handleHabitToggle(habit.id)}
             />
-            <span className="text-[#212121] text-sm flex-1">
+            <span className="flex-1" style={{
+              color: '#080000',
+              fontFeatureSettings: '"liga" off, "clig" off',
+              fontFamily: 'Roboto',
+              fontSize: '18px',
+              fontStyle: 'normal',
+              fontWeight: '700',
+              lineHeight: '16px',
+              letterSpacing: '1.25px',
+              textTransform: 'uppercase'
+            }}>
               {habit.title}
             </span>
           </div>
@@ -141,10 +164,22 @@ export const HabitchecklistCard = ({ onClose }) => {
 
       <button
         onClick={handleSubmit}
-        className="bg-[#212121] box-border content-stretch flex gap-1 items-center justify-center px-3 py-2.5 relative rounded-[4px] shrink-0 cursor-pointer"
+        className="cursor-pointer"
+        style={{
+          display: 'flex',
+          width: '85px',
+          height: '36px',
+          padding: '10px 12px',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '4px',
+          flexShrink: 0,
+          borderRadius: '4px',
+          background: '#212121'
+        }}
       >
         <div className="font-medium leading-[0] relative shrink-0 text-[14px] text-nowrap text-white tracking-[1.25px] uppercase">
-          <p className="leading-[16px] whitespace-pre">BUTTON</p>
+          <p className="leading-[16px] whitespace-pre">완료</p>
         </div>
       </button>
       </div>
