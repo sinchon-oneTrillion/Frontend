@@ -7,9 +7,12 @@ export const Layout = () => {
   const hideNavbar = location.pathname === '/onboarding';
 
   return (
-    <>
+    <div className="h-[844px] overflow-hidden">
+      <div className={!hideNavbar ? "pt-16 pb-16 h-full" : "h-full"}>
+        <Outlet />
+      </div>
       {!hideNavbar && <Navbar />}
-      <Outlet />
-    </>
+    </div>
   );
 };
+
