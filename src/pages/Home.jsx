@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { HabitchecklistCard } from '../shared/components/HabitChecklistCard';
-import skin1 from '../assets/skin1.png';
+import face1 from '../assets/face1.png';
+import face2 from '../assets/face2.png';
 
 export const Home = () => {
   const [showPopup, setShowPopup] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const handleHomeButtonClick = () => {
     setShowPopup(true);
   };
 
   const handleClosePopup = () => {
+    setShowPopup(false);
+  };
+
+  const handleHabitsCompleted = () => {
+    setIsCompleted(true);
     setShowPopup(false);
   };
 
@@ -39,24 +46,24 @@ export const Home = () => {
     const formattedDate = `${month}/${day}`;
 
   return (
-    <div className="flex flex-col items-center h-full bg-gray-300 overflow-hidden">
+    <div className="flex flex-col items-center h-full bg-gradient-to-b from-[#FFF600] to-[#FFBC2B] overflow-hidden">
       {/* 랜덤 격려글 */}
-      <div className="w-[300px] h-[50px] bg-white border rounded-md shadow flex items-center justify-center mt-20">
+      <div className="w-[300px] h-[50px] bg-gray-200 border rounded-md shadow flex items-center justify-center mt-20">
         <span className="text-lg font-medium">{getRandomMessage()}</span>
       </div>
 
       {/* Today */}
       <div className="flex flex-col items-center space-y-4 mt-auto mb-0">
-        <div className="flex flex-col items-center text-2xl font-semibold">
+        <div className="text-white flex flex-col items-center text-3xl font-bold">
         Today
-        <div className="text-black text-2xl">{formattedDate}</div>
+        <div className="text-white text-2xl font-semibold">{formattedDate}</div>
         </div>
         <button className="cursor-pointer" onClick={handleHomeButtonClick}>
-          <img src={skin1} alt="머리" className="w-80 h-auto" />
+          <img src={isCompleted ? face2 : face1} alt="머리" className="w-80 h-auto" />
         </button>
         </div>
 
-      {showPopup && <HabitchecklistCard onClose={handleClosePopup} />}
+      {showPopup && <HabitchecklistCard onClose={handleClosePopup} onComplete={handleHabitsCompleted} />}
     </div>
   );
 };
