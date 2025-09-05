@@ -1,8 +1,4 @@
-import type { PropsWithChildren } from 'react';
-
-type Props = PropsWithChildren<{ className?: string }>;
-
-export default function Container({ children, className = '' }: Props) {
+export default function Container({ children, className = '' }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div
