@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ChevronLeftIcon from '../../assets/icons/Calender_chevron-left-md.svg';
 import ChevronRightIcon from '../../assets/icons/Calender_chevron-right-md.svg';
 import DonutProgress from './DonutProgress';
+import { getCalendarMonth } from '../../apis/calendar';
 
 function Calendar({ nickname = 'abcde', onDateClick }) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -40,8 +41,7 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
     setError(null);
     try {
       const month = currentDate.getMonth() + 1; // 1-12 형식
-      const response = await fetch(`/calendar/${nickname}/${month}`);
-      const data = await response.json();
+      const data = await getCalendarMonth(nickname, month);
 
       if (data.status === 200) {
         setCalendarData(data.calendar);
@@ -50,7 +50,7 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
       }
     } catch (error) {
       console.error('캘린더 데이터조회 실패:', error);
-      setError('서버오류 발생');
+      setError('서버 오류가 발생했습니다');
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
           {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => (
             <div
               key={day}
-              className="text-center text-sm font-medium text-gray-500 py-2"
+              className="text-center text-sm font-medium text-gray-400 py-2"
             >
               {day}
             </div>
@@ -140,7 +140,7 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
         </div>
 
         {/* 날짜 그리드 */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 ">
           {daysArray.map((day, idx) => {
             const dateData = day ? getDateData(day) : null;
             const isToday =
@@ -156,16 +156,23 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
                 key={idx}
                 onClick={() => day && handleDateClick(day)}
                 className={`
-                  h-12 flex items-center justify-center text-sm cursor-pointer rounded relative
+                  h-16 flex items-center justify-center text-base cursor-pointer rounded relative
                   ${day ? 'hover:bg-gray-200' : ''}
-                  ${isToday ? 'bg-gray-500 text-white font-medium' : ''}
+                  ${isToday ? 'bg-gray-200 text-gray-900 font-medium' : ''}
                   ${day ? 'text-gray-900' : ''}
                   ${loading ? 'opacity-50' : ''}
                 `}
               >
                 {day && (
                   <div className="relative w-full h-full flex items-center justify-center">
-                    <span className={isToday ? 'text-white' : ''}>{day}</span>
+                    <span
+                      className={`
+                        ${isToday ? 'text-gray-900' : ''} 
+                        ${dateData && (dateData.has_memo || dateData.has_picture) ? 'text-yellow-600 font-bold' : ''}
+                      `}
+                    >
+                      {day}
+                    </span>
 
                     {/* API 데이터 기반 인디케이터 */}
                     {dateData && (
@@ -183,10 +190,11 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
                     )}
 
                     {/* 달성률 도넛 차트 */}
-                    <div className="absolute -bottom-1 -right-1">
+                    <div className="absolute -bottom-4 -right-0.1">
                       <DonutProgress
                         percentage={progressPercentage}
-                        size={20}
+                        size={30}
+                        strokeWidth={6}
                       />
                     </div>
                   </div>
