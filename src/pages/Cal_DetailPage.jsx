@@ -281,7 +281,7 @@ function CreatePage() {
             className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors ml-4"
             disabled={loading}
           >
-            {loading ? '저장 중...' : '완료'}
+            {loading ? '저장 중...' : '수정'}
           </button>
         </div>
       </div>
