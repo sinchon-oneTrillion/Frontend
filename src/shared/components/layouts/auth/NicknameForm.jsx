@@ -65,7 +65,24 @@ export default function NicknameForm({ mode = 'signup' }) {
         navigate('/home');
       }
     } catch (err) {
-      alert(err.message || '요청 실패');
+      // ---- 에러 분기 처리 ----
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.message || err?.message || '';
+
+      if (
+        mode === 'login' &&
+        (status === 404 ||
+          /not\s*found|존재하지|없(습니다|어요)/i.test(serverMsg))
+      ) {
+        alert('등록되어있지 않은 유저입니다. 회원가입을 해주세요.');
+      } else if (
+        mode === 'signup' &&
+        (status === 409 || /이미|중복|duplicate/i.test(serverMsg))
+      ) {
+        alert('이미 등록되어있는 유저입니다. 다른 닉네임을 입력해주세요.');
+      } else {
+        alert(serverMsg || '요청 실패');
+      }
     } finally {
       setLoading(false);
     }

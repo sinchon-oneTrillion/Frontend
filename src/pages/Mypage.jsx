@@ -1,5 +1,6 @@
 // src/pages/Mypage.jsx
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Container from '../shared/components/layouts/Container';
 import { getMypage, patchMypage } from '../apis/mypage';
 
@@ -13,6 +14,7 @@ const ALL_CARDS = [
 const normalize = (s) => (s || '').replace(/\s+/g, '').trim();
 
 export default function Mypage() {
+  const navigate = useNavigate();
   const nicknameParam = localStorage.getItem('onboarding_nickname') || '';
 
   const [nickname, setNickname] = useState('');
@@ -20,12 +22,11 @@ export default function Mypage() {
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(''); // 화면에는 표시하지 않지만 내부적으로만 사용
 
-  // 초기 조회
+  // --- 초기 조회 ---
+  // --- 초기 조회 ---
   useEffect(() => {
     if (!nicknameParam) {
-      setErrorMsg('닉네임 정보를 찾을 수 없어 임시로 [-]로 표시합니다.');
       setNickname('');
       setOrigCards([]);
       setSelected([]);
@@ -36,21 +37,48 @@ export default function Mypage() {
     (async () => {
       try {
         setLoading(true);
+
         const data = await getMypage(nicknameParam);
-        setNickname(data?.nickname || '');
-
+        // API: { httpStatus, userId, cards:[{list, achieve}] }
         const serverCards = Array.isArray(data?.cards) ? data.cards : [];
-        const normalizedSet = new Set(serverCards.map(normalize));
-        const initSelected = ALL_CARDS.filter((label) =>
-          normalizedSet.has(normalize(label))
-        );
 
+        // 1) 서버에서 achieve=true 인 라벨만 뽑기
+        const serverSelected = serverCards
+          .filter((c) => c?.achieve)
+          .map((c) => String(c?.list || ''));
+
+        // 2) ALL_CARDS와 정확히 매핑(공백 제거 normalize 사용)
+        const labelMap = new Map(ALL_CARDS.map((lbl) => [normalize(lbl), lbl]));
+        const mappedFromServer = serverSelected
+          .map((lbl) => labelMap.get(normalize(lbl)))
+          .filter(Boolean); // ALL_CARDS에 없는 라벨은 제거
+
+        // 3) 폴백: 서버에서 매칭되는 게 없으면 로컬스토리지 선택값 사용
+        let initSelected = mappedFromServer;
+        if (initSelected.length === 0) {
+          const local = JSON.parse(
+            localStorage.getItem('onboarding_choices') || '[]'
+          );
+          initSelected = local
+            .map((lbl) => labelMap.get(normalize(lbl)))
+            .filter(Boolean);
+        }
+
+        setNickname(nicknameParam);
         setOrigCards(initSelected);
         setSelected(initSelected);
-        setErrorMsg('');
+
+        // 디버깅 로그(원인 파악에 도움)
+        console.groupCollapsed('%c[MYPAGE INIT]', 'color:#6366f1');
+        console.log('serverSelected raw:', serverSelected);
+        console.log('mappedFromServer:', mappedFromServer);
+        console.log(
+          'fallback local:',
+          JSON.parse(localStorage.getItem('onboarding_choices') || '[]')
+        );
+        console.log('initSelected(final):', initSelected);
+        console.groupEnd();
       } catch (e) {
-        // 실패해도 화면은 계속 렌더. 배너는 안 보임.
-        setErrorMsg(e?.message || '마이페이지 조회 실패.');
         setNickname('');
         setOrigCards([]);
         setSelected([]);
@@ -60,7 +88,7 @@ export default function Mypage() {
     })();
   }, [nicknameParam]);
 
-  // 비교/토글
+  // --- 비교/토글 ---
   const selectedSet = useMemo(() => new Set(selected), [selected]);
   const origSet = useMemo(() => new Set(origCards), [origCards]);
 
@@ -79,17 +107,15 @@ export default function Mypage() {
       s.includes(label) ? s.filter((x) => x !== label) : [...s, label]
     );
 
-  // 저장
+  // --- 저장 ---
   const save = async () => {
     if (saving) return;
-
     if (!nicknameParam) {
       alert(
         '닉네임 정보가 없어 저장할 수 없습니다. 로그인/회원가입을 진행해 주세요.'
       );
       return;
     }
-
     if (!hasChanges) {
       alert('수정을 해주세요. (변경된 항목이 없습니다)');
       return;
@@ -97,24 +123,17 @@ export default function Mypage() {
 
     try {
       setSaving(true);
-
-      console.groupCollapsed('%c[PATCH PAYLOAD]', 'color:#f59e0b');
-      console.log('nickname:', nicknameParam);
-      console.log('add_cards:', addCards);
-      console.log('remove_cards:', removeCards);
-      console.groupEnd();
-
       const data = await patchMypage(nicknameParam, addCards, removeCards);
 
-      const serverCards = Array.isArray(data?.cards) ? data.cards : [];
-      const normalizedSet = new Set(serverCards.map(normalize));
+      const serverSelected = Array.isArray(data?.cards) ? data.cards : [];
+      const setFromServer = new Set(serverSelected.map(normalize));
       const synced = ALL_CARDS.filter((label) =>
-        normalizedSet.has(normalize(label))
+        setFromServer.has(normalize(label))
       );
 
       setOrigCards(synced);
       setSelected(synced);
-      setNickname(data?.nickname || '');
+      setNickname(data?.nickname || nicknameParam);
       alert('수정이 반영되었습니다.');
     } catch (e) {
       alert(e?.message || '저장 중 오류가 발생했습니다.');
@@ -123,6 +142,7 @@ export default function Mypage() {
     }
   };
 
+  // --- UI ---
   if (loading) {
     return (
       <Container className="max-w-[720px] mx-auto">
@@ -131,38 +151,53 @@ export default function Mypage() {
     );
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('onboarding_nickname');
+    localStorage.removeItem('auth_mode');
+    localStorage.removeItem('onboarding_user_id');
+    localStorage.removeItem('onboarding_choices');
+    navigate('/onboarding', { replace: true });
+  };
+
   return (
     <Container
       className="max-w-[720px] mx-auto !pt-16 md:!pt-20"
-      bgClassName={'bg-gradient-to-b from-[#FFF600] to-[#FFBC2B]'}
+      bgClassName="bg-gradient-to-b from-[#FFF600] to-[#FFBC2B]"
     >
-      <section className="-mt-2 mb-8">
-        <h2 className="mb-2 text-base text-gray-700 justify-center">닉네임</h2>
-        <div className="text-[20px] font-light tracking-[0.25em] uppercase text-gray-400">
+      <section className="-mt-[81px] mb-8">
+        <h3 className="text-[20px] mt-[81px] mb-2 font-bold ml-[53px] text-[#000000]">
+          닉네임
+        </h3>
+        <div className="text-[20px] font-light uppercase text-[#000000] ml-[53px]">
           {nickname && nickname.trim() ? nickname : '로그인을 해주세요'}
         </div>
       </section>
 
-      <h3 className="mb-6 text-[18px] font-semibold whitespace-nowrap">
-        내가 형성하고 싶은 습관 <span className="text-red-500">[수정하기]</span>
+      <h3 className="mb-5 text-[18px] font-semibold whitespace-nowrap ml-[53px]">
+        내가 형성하고 싶은 습관은?{' '}
+        <p className="text-red-500 font-medium text-[14px]">수정하기</p>
       </h3>
 
-      <ul className="space-y-4">
+      <ul className="space-y-4 ml-[47px]">
         {ALL_CARDS.map((label) => {
           const active = selectedSet.has(label);
           return (
             <li
               key={label}
               onClick={() => toggle(label)}
-              className={`relative w-full rounded-xl border bg-white p-5 transition cursor-pointer
-                ${active ? 'border-black/70' : 'border-gray-300 hover:bg-gray-50'}`}
+              className={`relative flex items-center w-[283px] h-11
+                          border bg-white px-4 cursor-pointer transition
+                          ${active ? 'border-white/70' : 'border-white/70 hover:bg-gray-50'}`}
             >
-              <span className="text-[15px] pr-10">{label}</span>
+              {/* 왼쪽 토글 */}
               <span
                 aria-hidden
-                className={`absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full border
-                  ${active ? 'border-black bg-black' : 'border-gray-300 bg-white'}`}
-              />
+                className={`mr-3 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border
+                            ${active ? 'border-black' : 'border-gray-300'}`}
+              >
+                {active && <span className="h-3 w-3 rounded-full bg-black" />}
+              </span>
+              <span className="text-[15px]">{label}</span>
             </li>
           );
         })}
@@ -173,13 +208,27 @@ export default function Mypage() {
           type="button"
           onClick={save}
           disabled={saving}
-          className={`h-12 w-28 rounded-lg text-white ${
+          className={`h-[36px] w-[85px] rounded-lg text-white ${
             hasChanges && !saving ? 'bg-black hover:opacity-90' : 'bg-gray-400'
           }`}
         >
           {saving ? '반영 중…' : '완료'}
         </button>
       </div>
+
+      <section className="mt-10 mb-5 text-center">
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={handleLogout}
+          onKeyDown={(e) =>
+            (e.key === 'Enter' || e.key === ' ') && handleLogout()
+          }
+          className="inline-block text-sm text-gray-600 cursor-pointer hover:underline hover:text-gray-900"
+        >
+          로그아웃
+        </span>
+      </section>
     </Container>
   );
 }
