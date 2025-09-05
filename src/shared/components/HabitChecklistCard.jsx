@@ -27,7 +27,7 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
   const [loading, setLoading] = useState(true);
   
   // 실제 로그인 시스템에서 nickname 가져오기
-  const nickname = "사용자닉네임";
+  const nickname = localStorage.getItem('onboarding_nickname') || "사용자닉네임";
 
   // Mock data for fallback
   const mockHabits = [
@@ -72,19 +72,15 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
   };
 
   const handleSubmit = async () => {
-    const allCompleted = habits.every(habit => habit.completed);
-    
-    if (allCompleted) {
-      try {
-        const completedCards = habits.map(habit => habit.title);
-        await completeHabitCards(nickname, completedCards);
-        alert('오늘도 수고하셨습니다!');
-        onComplete();
-      } catch (error) {
-        console.log('API 연결 실패, 로컬에서 완료 처리:', error);
-        alert('오늘도 수고하셨습니다!');
-        onComplete();
-      }
+    try {
+      const completedCards = habits.filter(habit => habit.completed).map(habit => habit.title);
+      await completeHabitCards(nickname, completedCards);
+      alert('오늘도 수고하셨습니다!');
+      onComplete();
+    } catch (error) {
+      console.log('API 연결 실패, 로컬에서 완료 처리:', error);
+      alert('오늘도 수고하셨습니다!');
+      onComplete();
     }
   };
 
@@ -110,7 +106,12 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
       className="fixed inset-0 flex items-center justify-center z-50"
       onClick={handleOverlayClick}
     >
-      <div className="bg-white box-border content-stretch flex flex-col gap-[30px] items-center justify-center px-[23px] py-11 relative">
+      <div className="box-border content-stretch flex flex-col gap-[30px] items-center justify-center px-[40px] py-11 relative" style={{
+        borderRadius: '16px',
+        border: '1px solid #020202',
+        background: '#FFF',
+        boxShadow: '0 2px 0 0 #000'
+      }}>
         {/* 닫기 버튼 */}
         <button 
           onClick={onClose}
@@ -119,7 +120,6 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
           >
         ×
         </button>
-        <div aria-hidden="true" className="absolute border border-black border-solid inset-0 pointer-events-none" />
       
       {habits.map((habit) => (
         <div 
@@ -132,7 +132,17 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
               checked={habit.completed}
               onClick={() => handleHabitToggle(habit.id)}
             />
-            <span className="text-[#212121] text-lg font-bold flex-1">
+            <span className="flex-1" style={{
+              color: '#080000',
+              fontFeatureSettings: '"liga" off, "clig" off',
+              fontFamily: 'Roboto',
+              fontSize: '18px',
+              fontStyle: 'normal',
+              fontWeight: '700',
+              lineHeight: '16px',
+              letterSpacing: '1.25px',
+              textTransform: 'uppercase'
+            }}>
               {habit.title}
             </span>
           </div>
@@ -141,7 +151,19 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
 
       <button
         onClick={handleSubmit}
-        className="bg-[#212121] box-border content-stretch flex gap-1 items-center justify-center px-3 py-2.5 relative rounded-[4px] shrink-0 cursor-pointer"
+        className="cursor-pointer"
+        style={{
+          display: 'flex',
+          width: '85px',
+          height: '36px',
+          padding: '10px 12px',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '4px',
+          flexShrink: 0,
+          borderRadius: '4px',
+          background: '#212121'
+        }}
       >
         <div className="font-medium leading-[0] relative shrink-0 text-[14px] text-nowrap text-white tracking-[1.25px] uppercase">
           <p className="leading-[16px] whitespace-pre">완료</p>

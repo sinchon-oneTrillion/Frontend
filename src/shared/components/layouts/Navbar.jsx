@@ -110,7 +110,7 @@ function TopNavbar() {
   return (
     <div className="bg-[#FFF600] content-stretch flex flex-col items-start justify-start fixed top-0 left-0 right-0 z-50">
       <div className="content-stretch flex items-center justify-center relative shrink-0 w-full h-16">
-        <img src={logotext} alt="로고글씨" className="w-50 h-auto" />
+        <img src={logotext} alt="로고글씨" className="w-[140px] height-[46px] h-auto" />
       </div>
       <div className="bg-[#020202] h-px shrink-0 w-full z-50" />
     </div>

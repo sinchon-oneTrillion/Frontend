@@ -28,7 +28,6 @@ export const Home = () => {
     "당신의 머리카락이 고마워해요!",
     "꾸준함이 만드는 아름다운 모발!",
     "오늘도 멋진 헤어를 위해!",
-    "건강한 습관이 예쁜 머리를 만들어요",
     "모발 관리의 달인이 되어봐요!",
     "새치 없는 윤기나는 머리카락!",
     "오늘 하루도 모발 건강 챙기세요!"
@@ -48,15 +47,38 @@ export const Home = () => {
   return (
     <div className="flex flex-col items-center h-full bg-gradient-to-b from-[#FFF600] to-[#FFBC2B] overflow-hidden">
       {/* 랜덤 격려글 */}
-      <div className="w-[300px] h-[50px] bg-gray-200 border rounded-md shadow flex items-center justify-center mt-20">
-        <span className="text-lg font-medium">{getRandomMessage()}</span>
+      <div className="flex items-center justify-center mt-20" style={{
+        borderRadius: '2px',
+        background: 'rgba(255, 252, 252, 0.50)',
+        width: '290px',
+        height: '51px',
+        flexShrink: 0
+      }}>
+        <span className="text-lg text-semibold font-medium" style={{color: '#000', opacity: 1}}>{getRandomMessage()}</span>
       </div>
 
       {/* Today */}
       <div className="flex flex-col items-center space-y-4 mt-auto mb-0">
-        <div className="text-white flex flex-col items-center text-3xl font-bold">
+        <div className="text-white flex flex-col items-center" style={{
+          color: '#FFF',
+          fontFamily: 'Roboto',
+          fontSize: '40px',
+          fontStyle: 'normal',
+          fontWeight: '700',
+          lineHeight: '100%',
+          letterSpacing: '-0.32px'
+        }}>
         Today
-        <div className="text-white text-2xl font-semibold">{formattedDate}</div>
+        <div style={{
+          color: '#FFF',
+          fontFamily: 'Roboto',
+          fontSize: '20px',
+          fontStyle: 'normal',
+          fontWeight: '400',
+          lineHeight: '100%',
+          letterSpacing: '-0.32px',
+          marginTop: '10px'
+        }}>{formattedDate}</div>
         </div>
         <button className="cursor-pointer" onClick={handleHomeButtonClick}>
           <img src={isCompleted ? face2 : face1} alt="머리" className="w-80 h-auto" />
