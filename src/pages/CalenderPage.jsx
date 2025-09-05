@@ -12,7 +12,7 @@ function CalendarPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10">
+    <div className="min-h-screen bg-gray-100 py-10 mt-5">
       <div className="container mx-auto px-4">
         <Calendar nickname={nickname} onDateClick={handleDateClick} />
       </div>
