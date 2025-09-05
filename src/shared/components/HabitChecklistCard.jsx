@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getHabitCards } from '../../apis/home';
+import { getHabitCards, completeHabitCards } from '../../apis/home';
 
 const imgRadioBase = "http://localhost:3845/assets/13fe777cd0f71483e930b356d82512fc8e0b1e3b.svg";
 const imgRadioDot = "http://localhost:3845/assets/89f47b654e0d2e8c8d2fefec52602ce7d519887e.svg";
@@ -29,6 +29,15 @@ export const HabitchecklistCard = ({ onClose }) => {
   // 실제 로그인 시스템에서 nickname 가져오기
   const nickname = "사용자닉네임";
 
+  // Mock data for fallback
+  const mockHabits = [
+    { id: 1, title: "검은 콩 먹기", completed: false },
+    { id: 2, title: "두피마사지 10번 하기", completed: false },
+    { id: 3, title: "물 8잔 마시기", completed: false },
+    { id: 4, title: "검은 콩 먹기", completed: false },
+    { id: 5, title: "두피마사지 10번 하기", completed: false },
+  ];
+
   useEffect(() => {
     const fetchHabits = async () => {
       try {
@@ -37,14 +46,15 @@ export const HabitchecklistCard = ({ onClose }) => {
         
         const habitsData = cards.map((card, index) => ({
           id: index + 1,
-          title: card,
-          completed: false
+          title: card.list,
+          completed: card.achieve
         }));
         
         setHabits(habitsData);
       } catch (error) {
-        // 에러 시 빈 배열로 설정
-        setHabits([]);
+        console.log('API 연결 실패, mock data 사용:', error);
+        // API 연결 실패 시 mock data 사용
+        setHabits(mockHabits);
       } finally {
         setLoading(false);
       }
@@ -61,12 +71,19 @@ export const HabitchecklistCard = ({ onClose }) => {
     );
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const allCompleted = habits.every(habit => habit.completed);
     
-    if (allCompleted && habits.length > 0) {
-      alert('오늘도 수고하셨습니다!');
-      onClose();
+    if (allCompleted) {
+      try {
+        const completedCards = habits.map(habit => habit.title);
+        await completeHabitCards(nickname, completedCards);
+        alert('오늘도 수고하셨습니다!');
+        onClose();
+      } catch (error) {
+        alert('완료 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error('습관 완료 처리 실패:', error);
+      }
     }
   };
 
@@ -93,6 +110,14 @@ export const HabitchecklistCard = ({ onClose }) => {
       onClick={handleOverlayClick}
     >
       <div className="bg-white box-border content-stretch flex flex-col gap-[30px] items-center justify-center px-[23px] py-11 relative">
+        {/* 닫기 버튼 */}
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-500 hover:text-black text-xl font-bold"
+          aria-label="닫기"
+          >
+        ×
+        </button>
         <div aria-hidden="true" className="absolute border border-black border-solid inset-0 pointer-events-none" />
       
       {habits.map((habit) => (
