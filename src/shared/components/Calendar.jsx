@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
-import ChevronLeftIcon from '../assets/icons/Calender_chevron-left-md.svg';
-import ChevronRightIcon from '../assets/icons/Calender_chevron-right-md.svg';
+import React, { useState, useEffect } from 'react';
+import ChevronLeftIcon from '../../assets/icons/Calender_chevron-left-md.svg';
+import ChevronRightIcon from '../../assets/icons/Calender_chevron-right-md.svg';
+import DonutProgress from './DonutProgress';
 
-function Calendar() {
+function Calendar({ nickname = 'abcde', onDateClick }) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarData, setCalendarData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const startOfMonth = new Date(
     currentDate.getFullYear(),
     currentDate.getMonth(),
@@ -20,7 +25,6 @@ function Calendar() {
   // 해당 월 마지막 날짜
   const daysInMonth = endOfMonth.getDate();
 
-  // 날짜 배열 생성 (7x6 그리드로 맞추기 위해 42개 셀 생성)
   const totalCells = 42;
   const daysArray = Array.from({ length: totalCells }, (_, i) => {
     const dayNumber = i - startDayIndex + 1;
@@ -29,6 +33,47 @@ function Calendar() {
     }
     return dayNumber;
   });
+
+  // 캘린더 데이터 조회 함수
+  const fetchCalendarData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const month = currentDate.getMonth() + 1; // 1-12 형식
+      const response = await fetch(`/calendar/${nickname}/${month}`);
+      const data = await response.json();
+
+      if (data.status === 200) {
+        setCalendarData(data.calendar);
+      } else {
+        setError(data.message || '캘린더 데이터를 불러올 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('캘린더 데이터조회 실패:', error);
+      setError('서버오류 발생');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 월 변경 시 데이터 다시 가져오기
+  useEffect(() => {
+    fetchCalendarData();
+  }, [currentDate, nickname]);
+
+  // 날짜별 데이터 찾기 함수
+  const getDateData = (day) => {
+    const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return calendarData.find((item) => item.date === dateString);
+  };
+
+  // 날짜 클릭 핸들러
+  const handleDateClick = (day) => {
+    const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (onDateClick) {
+      onDateClick(dateString);
+    }
+  };
 
   // 이전·다음 달 이동 함수
   const prevMonth = () =>
@@ -47,14 +92,15 @@ function Calendar() {
   });
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white border border-gray-300 rounded-lg shadow-sm">
+    <div className="w-full max-w-md mx-auto bg-white border border-black-500 rounded-lg relative">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
         <h2 className="text-lg font-medium text-gray-900">{monthYear}</h2>
         <div className="flex items-center space-x-2">
           <button
             onClick={prevMonth}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
+            className="p-1 hover:bg-gray-200 rounded transition-colors cursor-pointer"
+            disabled={loading}
           >
             <img
               src={ChevronLeftIcon}
@@ -64,12 +110,20 @@ function Calendar() {
           </button>
           <button
             onClick={nextMonth}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
+            className="p-1 hover:bg-gray-200 rounded transition-colors cursor-pointer"
+            disabled={loading}
           >
             <img src={ChevronRightIcon} alt="Next month" className="w-5 h-5" />
           </button>
         </div>
       </div>
+
+      {/* 에러 메시지 */}
+      {error && (
+        <div className="px-4 py-2 bg-red-50 border-b border-red-200">
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
 
       {/* 캘린더 그리드 */}
       <div className="p-4">
@@ -87,56 +141,68 @@ function Calendar() {
 
         {/* 날짜 그리드 */}
         <div className="grid grid-cols-7 gap-1">
-          {daysArray.map((day, idx) => (
-            <div
-              key={idx}
-              className={`
-                h-10 flex items-center justify-center text-sm cursor-pointer rounded
-                ${day ? 'hover:bg-gray-100' : ''}
-                ${
-                  day === new Date().getDate() &&
-                  currentDate.getMonth() === new Date().getMonth() &&
-                  currentDate.getFullYear() === new Date().getFullYear()
-                    ? 'bg-blue-500 text-white font-medium'
-                    : ''
-                }
-                ${day ? 'text-gray-900' : ''}
-              `}
-            >
-              {day && (
-                <div className="relative">
-                  {day}
-                  {/* 체크마크 아이콘 (예시로 일부 날짜에 추가) */}
-                  {(day === 1 ||
-                    day === 2 ||
-                    day === 3 ||
-                    day === 4 ||
-                    day === 5 ||
-                    day === 6) && (
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full flex items-center justify-center">
-                      <svg
-                        className="w-2 h-2 text-white"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+          {daysArray.map((day, idx) => {
+            const dateData = day ? getDateData(day) : null;
+            const isToday =
+              day === new Date().getDate() &&
+              currentDate.getMonth() === new Date().getMonth() &&
+              currentDate.getFullYear() === new Date().getFullYear();
+
+            // 진행률: API 데이터가 있으면 사용, 없으면 0%
+            const progressPercentage = dateData ? dateData.achivement_rate : 0;
+
+            return (
+              <div
+                key={idx}
+                onClick={() => day && handleDateClick(day)}
+                className={`
+                  h-12 flex items-center justify-center text-sm cursor-pointer rounded relative
+                  ${day ? 'hover:bg-gray-200' : ''}
+                  ${isToday ? 'bg-gray-500 text-white font-medium' : ''}
+                  ${day ? 'text-gray-900' : ''}
+                  ${loading ? 'opacity-50' : ''}
+                `}
+              >
+                {day && (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <span className={isToday ? 'text-white' : ''}>{day}</span>
+
+                    {/* API 데이터 기반 인디케이터 */}
+                    {dateData && (
+                      <>
+                        {/* 메모/이미지 작은 점 표시 */}
+                        <div className="absolute top-1 right-1 flex space-x-1">
+                          {dateData.has_memo && (
+                            <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                          )}
+                          {dateData.has_picture && (
+                            <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {/* 달성률 도넛 차트 */}
+                    <div className="absolute -bottom-1 -right-1">
+                      <DonutProgress
+                        percentage={progressPercentage}
+                        size={20}
+                      />
                     </div>
-                  )}
-                  {/* 동그라미 표시 (예시로 일부 날짜에 추가) */}
-                  {(day === 10 || day === 11 || day === 12) && (
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 border-2 border-green-500 rounded-full bg-white"></div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+          <div className="text-sm text-gray-500">로딩 중...</div>
+        </div>
+      )}
     </div>
   );
 }
