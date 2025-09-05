@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getHabitCards, completeHabitCards } from '../../apis/home';
 
-const imgRadioBase = "http://localhost:3845/assets/13fe777cd0f71483e930b356d82512fc8e0b1e3b.svg";
-const imgRadioDot = "http://localhost:3845/assets/89f47b654e0d2e8c8d2fefec52602ce7d519887e.svg";
+const imgRadioBase = "https://localhost:3845/assets/13fe777cd0f71483e930b356d82512fc8e0b1e3b.svg";
+const imgRadioDot = "https://localhost:3845/assets/89f47b654e0d2e8c8d2fefec52602ce7d519887e.svg";
 
 const RadioButton = ({ checked, onClick }) => {
   return (
@@ -42,15 +42,28 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
     const fetchHabits = async () => {
       try {
         const data = await getHabitCards(nickname);
-        const { cards } = data;
+        console.log('API 응답 데이터:', data);
         
-        const habitsData = cards.map((card, index) => ({
-          id: index + 1,
-          title: card.list,
-          completed: card.achieve
-        }));
-        
-        setHabits(habitsData);
+        // API 응답 구조에 맞게 처리
+        if (data && data.cards && Array.isArray(data.cards)) {
+          const habitsData = data.cards.map((card, index) => ({
+            id: index + 1,
+            title: card.list,
+            completed: card.achieve
+          }));
+          setHabits(habitsData);
+        } else if (data && Array.isArray(data)) {
+          // 만약 data 자체가 배열인 경우
+          const habitsData = data.map((card, index) => ({
+            id: index + 1,
+            title: card.list || card.title,
+            completed: card.achieve || card.completed || false
+          }));
+          setHabits(habitsData);
+        } else {
+          console.log('예상하지 못한 API 응답 구조, mock data 사용');
+          setHabits(mockHabits);
+        }
       } catch (error) {
         console.log('API 연결 실패, mock data 사용:', error);
         // API 연결 실패 시 mock data 사용

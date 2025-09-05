@@ -1,11 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HabitchecklistCard } from '../shared/components/HabitChecklistCard';
+import { getHomeStatus } from '../apis/home';
 import face1 from '../assets/face1.png';
 import face2 from '../assets/face2.png';
 
 export const Home = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  
+  const nickname = localStorage.getItem('onboarding_nickname') || "사용자닉네임";
+
+  useEffect(() => {
+    const fetchHomeStatus = async () => {
+      try {
+        const data = await getHomeStatus(nickname);
+        if (data && typeof data.is_achieved === 'boolean') {
+          setIsCompleted(data.is_achieved);
+        }
+      } catch (error) {
+        console.log('홈 상태 가져오기 실패:', error);
+      }
+    };
+
+    fetchHomeStatus();
+  }, [nickname]);
 
   const handleHomeButtonClick = () => {
     setShowPopup(true);
@@ -15,8 +33,16 @@ export const Home = () => {
     setShowPopup(false);
   };
 
-  const handleHabitsCompleted = () => {
-    setIsCompleted(true);
+  const handleHabitsCompleted = async () => {
+    try {
+      const data = await getHomeStatus(nickname);
+      if (data && typeof data.is_achieved === 'boolean') {
+        setIsCompleted(data.is_achieved);
+      }
+    } catch (error) {
+      console.log('홈 상태 업데이트 실패:', error);
+      setIsCompleted(true);
+    }
     setShowPopup(false);
   };
 
