@@ -7,5 +7,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 3000,
+
+    '/api': {
+      target: 'https://saechi.shop',
+      changeOrigin: true,
+      secure: false,
+    },
   },
 });

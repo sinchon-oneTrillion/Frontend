@@ -1,6 +1,8 @@
+// src/shared/components/layouts/auth/NicknameForm.jsx
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '../Container';
+import { signup, login } from '../../../../apis/auth'; // 경로 확인!
 
 function getUUID() {
   if (typeof window === 'undefined') return '';
@@ -12,6 +14,7 @@ function getUUID() {
   }
   return v;
 }
+
 function validate(n) {
   const t = n.trim();
   const re = /^[a-zA-Z0-9가-힣_-]{2,12}$/;
@@ -31,21 +34,41 @@ export default function NicknameForm({ mode = 'signup' }) {
   const title = mode === 'signup' ? '닉네임으로 회원가입' : '닉네임으로 로그인';
   const buttonText = mode === 'signup' ? '회원가입' : '로그인';
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    const msg = validate(nickname);
-    if (msg) return setError(msg);
 
-    setLoading(true);
-    const nn = nickname.trim();
-    localStorage.setItem('auth_mode', mode);
-    localStorage.setItem('onboarding_nickname', nn);
-    if (mode === 'signup') {
-      localStorage.removeItem('onboarding_choices');
+    const msg = validate(nickname);
+    if (msg) {
+      setError(msg);
+      return;
     }
 
-    const nextPath = mode === 'login' ? '/home' : '/onboarding/select';
-    setTimeout(() => navigate(nextPath), 100);
+    const nn = nickname.trim();
+    setLoading(true);
+
+    try {
+      if (mode === 'signup') {
+        const res = await signup(nn); // POST /api/users/signup
+        console.log('[Signup Response]', res);
+        if (typeof res?.user_id !== 'undefined') {
+          localStorage.setItem('onboarding_user_id', String(res.user_id));
+        }
+        localStorage.setItem('onboarding_nickname', nn);
+        localStorage.setItem('auth_mode', 'signup');
+        localStorage.removeItem('onboarding_choices'); // 신규가입 초기화
+        navigate('/onboarding/select');
+      } else {
+        const res = await login(nn); // POST /api/users/login
+        console.log('[Login Response]', res);
+        localStorage.setItem('onboarding_nickname', res?.nickname || nn);
+        localStorage.setItem('auth_mode', 'login');
+        navigate('/home'); // 로그인은 메인으로
+      }
+    } catch (err) {
+      alert(err.message || '요청 실패');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
