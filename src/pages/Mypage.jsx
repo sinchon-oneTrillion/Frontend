@@ -21,6 +21,7 @@ export default function Mypage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  // ------- API helpers -------
   async function fetchMyPage(nick) {
     const res = await fetch(`/mypage/${encodeURIComponent(nick)}`);
     const data = await res.json().catch(() => ({}));
@@ -43,6 +44,7 @@ export default function Mypage() {
     return data; // { status, message, nickname, cards }
   }
 
+  // ------- 초기 조회 -------
   useEffect(() => {
     if (!nicknameParam) {
       setError('닉네임 정보를 찾을 수 없습니다. 온보딩부터 진행해 주세요.');
@@ -72,6 +74,7 @@ export default function Mypage() {
     })();
   }, [nicknameParam]);
 
+  // ------- 선택/비교 -------
   const selectedSet = useMemo(() => new Set(selected), [selected]);
   const origSet = useMemo(() => new Set(origCards), [origCards]);
 
@@ -91,15 +94,19 @@ export default function Mypage() {
     );
   };
 
-  const complete = async () => {
-    if (!hasChanges || saving) {
-      // window.location.href = '/';
+  const save = async () => {
+    if (saving) return;
+
+    if (!hasChanges) {
+      alert('수정을 해주세요. (변경된 항목이 없습니다)');
       return;
     }
+
     try {
       setSaving(true);
       const data = await patchMyPage(nicknameParam, addCards, removeCards);
 
+      // 서버 최신 상태 동기화
       const serverCards = Array.isArray(data?.cards) ? data.cards : [];
       const normalizedSet = new Set(serverCards.map(normalize));
       const synced = ALL_CARDS.filter((label) =>
@@ -110,6 +117,7 @@ export default function Mypage() {
       setSelected(synced);
       setNickname(data?.nickname || nicknameParam);
 
+      // 성공 후 메인으로
       window.location.href = '/';
     } catch (e) {
       alert(e?.message || '저장 중 오류가 발생했습니다.');
@@ -118,6 +126,7 @@ export default function Mypage() {
     }
   };
 
+  // ------- UI -------
   if (loading) {
     return (
       <Container className="max-w-[720px] mx-auto">
@@ -144,10 +153,8 @@ export default function Mypage() {
       </section>
 
       {/* 제목 */}
-
       <h3 className="mb-6 text-[18px] font-semibold">
-        내가 형성하고 싶은 습관
-        <p className="text-red-600 font-medium">습관목록을 수정합니다</p>
+        내가 형성하고 싶은 습관 <text className="text-red-500">[수정하기]</text>
       </h3>
 
       {/* 카드 리스트: 항상 토글 가능 */}
@@ -172,16 +179,14 @@ export default function Mypage() {
         })}
       </ul>
 
-      {/* 완료(서버 반영) */}
+      {/* 저장(서버 반영) */}
       <div className="mt-12 flex items-center justify-center">
         <button
           type="button"
-          onClick={complete}
-          disabled={!hasChanges || saving}
+          onClick={save}
+          disabled={saving}
           className={`h-12 w-28 rounded-lg text-white ${
-            hasChanges && !saving
-              ? 'bg-black hover:opacity-90'
-              : 'bg-gray-300 cursor-not-allowed'
+            hasChanges && !saving ? 'bg-black hover:opacity-90' : 'bg-gray-400'
           }`}
         >
           {saving ? '반영 중…' : '완료'}
