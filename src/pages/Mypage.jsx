@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Container from '../shared/components/layouts/Container';
 import { getMypage, patchMypage } from '../apis/mypage';
 
-const ALL_CARDS = [
+const DEFAULT_CARDS = [
   '두피 5분 마사지 하기',
   '비오틴 포함 영양제 챙겨먹기',
   '견과류 한 줌 먹기',
@@ -13,18 +13,36 @@ const ALL_CARDS = [
 ];
 
 const normalize = (s) => (s || '').replace(/\s+/g, '').trim();
+const uniqByNormalize = (arr) => {
+  const seen = new Set();
+  const out = [];
+  for (const s of arr) {
+    const k = normalize(s);
+    if (k && !seen.has(k)) {
+      seen.add(k);
+      out.push(s);
+    }
+  }
+  return out;
+};
+const mapToCatalogLabels = (names, catalog) => {
+  const map = new Map(catalog.map((lbl) => [normalize(lbl), lbl]));
+  return names.map((n) => map.get(normalize(n))).filter(Boolean);
+};
 
 export default function Mypage() {
   const navigate = useNavigate();
   const nicknameParam = localStorage.getItem('onboarding_nickname') || '';
 
+  // 렌더에 쓰는 카드 카탈로그(서버+기본 합집합)
+  const [catalog, setCatalog] = useState(DEFAULT_CARDS);
+
   const [nickname, setNickname] = useState('');
-  const [origCards, setOrigCards] = useState([]);
-  const [selected, setSelected] = useState([]);
+  const [origCards, setOrigCards] = useState([]); // 서버 기준 활성값
+  const [selected, setSelected] = useState([]); // 현재 토글 상태
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // --- 초기 조회 ---
   // --- 초기 조회 ---
   useEffect(() => {
     if (!nicknameParam) {
@@ -38,49 +56,74 @@ export default function Mypage() {
     (async () => {
       try {
         setLoading(true);
-
         const data = await getMypage(nicknameParam);
-        // API: { httpStatus, userId, cards:[{list, achieve}] }
-        const serverCards = Array.isArray(data?.cards) ? data.cards : [];
+        const rawCards = Array.isArray(data?.cards) ? data.cards : [];
 
-        // 1) 서버에서 achieve=true 인 라벨만 뽑기
-        const serverSelected = serverCards
-          .filter((c) => c?.achieve)
-          .map((c) => String(c?.list || ''));
+        // 서버 응답 형태 파악 (객체 배열 vs 문자열 배열)
+        const looksObject =
+          rawCards.length > 0 &&
+          typeof rawCards[0] === 'object' &&
+          rawCards[0] !== null &&
+          'list' in rawCards[0];
 
-        // 2) ALL_CARDS와 정확히 매핑(공백 제거 normalize 사용)
-        const labelMap = new Map(ALL_CARDS.map((lbl) => [normalize(lbl), lbl]));
-        const mappedFromServer = serverSelected
-          .map((lbl) => labelMap.get(normalize(lbl)))
-          .filter(Boolean); // ALL_CARDS에 없는 라벨은 제거
+        let allFromServer = [];
+        let selectedFromServer = [];
 
-        // 3) 폴백: 서버에서 매칭되는 게 없으면 로컬스토리지 선택값 사용
-        let initSelected = mappedFromServer;
+        if (looksObject) {
+          // 같은 list 중복 제거 + achieve는 OR 집계
+          const byKey = new Map(); // key = normalize(list) -> { list, achieve }
+          for (const item of rawCards) {
+            const list = String(item?.list || '').trim();
+            if (!list) continue;
+            const key = normalize(list);
+            const prev = byKey.get(key);
+            const ach = Boolean(item?.achieve);
+            byKey.set(key, { list, achieve: prev?.achieve || ach });
+          }
+          const merged = Array.from(byKey.values());
+          allFromServer = merged.map((v) => v.list);
+          selectedFromServer = merged
+            .filter((v) => v.achieve)
+            .map((v) => v.list);
+        } else {
+          // 혹시 문자열 배열로 올 수도 있으므로 방어
+          allFromServer = rawCards.map(String);
+          selectedFromServer = rawCards.map(String);
+        }
+
+        // 카탈로그: 기본 + 서버 전체
+        const tmpCatalog = uniqByNormalize([
+          ...DEFAULT_CARDS,
+          ...allFromServer,
+        ]);
+
+        // 초기 선택: 서버 활성 → 카탈로그 라벨로 매핑
+        let initSelected = mapToCatalogLabels(selectedFromServer, tmpCatalog);
+
+        // 폴백: 서버 활성값이 하나도 없으면 로컬스토리지 사용
         if (initSelected.length === 0) {
           const local = JSON.parse(
             localStorage.getItem('onboarding_choices') || '[]'
           );
-          initSelected = local
-            .map((lbl) => labelMap.get(normalize(lbl)))
-            .filter(Boolean);
+          initSelected = mapToCatalogLabels(local, tmpCatalog);
         }
 
+        setCatalog(tmpCatalog);
         setNickname(nicknameParam);
         setOrigCards(initSelected);
         setSelected(initSelected);
 
-        // 디버깅 로그(원인 파악에 도움)
+        // 디버깅
         console.groupCollapsed('%c[MYPAGE INIT]', 'color:#6366f1');
-        console.log('serverSelected raw:', serverSelected);
-        console.log('mappedFromServer:', mappedFromServer);
-        console.log(
-          'fallback local:',
-          JSON.parse(localStorage.getItem('onboarding_choices') || '[]')
-        );
+        console.table(rawCards);
+        console.log('allFromServer:', allFromServer);
+        console.log('selectedFromServer:', selectedFromServer);
+        console.log('tmpCatalog:', tmpCatalog);
         console.log('initSelected(final):', initSelected);
         console.groupEnd();
       } catch (e) {
         setNickname('');
+        setCatalog(DEFAULT_CARDS);
         setOrigCards([]);
         setSelected([]);
       } finally {
@@ -124,17 +167,33 @@ export default function Mypage() {
 
     try {
       setSaving(true);
+
+      // 서버로는 문자열만 보냄
       const data = await patchMypage(nicknameParam, addCards, removeCards);
+      // 패치 응답은 문자열 배열이라고 가정 (백엔드 명세)
+      let serverSelected = Array.isArray(data?.cards) ? data.cards : [];
 
-      const serverSelected = Array.isArray(data?.cards) ? data.cards : [];
-      const setFromServer = new Set(serverSelected.map(normalize));
-      const synced = ALL_CARDS.filter((label) =>
-        setFromServer.has(normalize(label))
-      );
+      // 혹시 객체 형태로 올 경우도 방어
+      if (
+        serverSelected.length > 0 &&
+        typeof serverSelected[0] === 'object' &&
+        serverSelected[0] !== null &&
+        'list' in serverSelected[0]
+      ) {
+        serverSelected = serverSelected.map((it) => String(it?.list || ''));
+      }
 
-      setOrigCards(synced);
-      setSelected(synced);
+      // 카탈로그에 서버 최종 선택도 합치기(혹시 기본 리스트에 없는 문자열 대비)
+      const nextCatalog = uniqByNormalize([...catalog, ...serverSelected]);
+
+      // 서버 최종 선택을 카탈로그 라벨로 매핑해서 화면 즉시 반영
+      const synced = mapToCatalogLabels(serverSelected, nextCatalog);
+
+      setCatalog(nextCatalog);
+      setOrigCards(synced); // 기준값을 갱신
+      setSelected(synced); // 화면 즉시 동기화
       setNickname(data?.nickname || nicknameParam);
+
       alert('수정이 반영되었습니다.');
     } catch (e) {
       alert(e?.message || '저장 중 오류가 발생했습니다.');
@@ -180,7 +239,7 @@ export default function Mypage() {
       </h3>
 
       <ul className="space-y-4 ml-[47px]">
-        {ALL_CARDS.map((label) => {
+        {catalog.map((label) => {
           const active = selectedSet.has(label);
           return (
             <li
@@ -188,7 +247,7 @@ export default function Mypage() {
               onClick={() => toggle(label)}
               className={`relative flex items-center w-[283px] h-11
                           border bg-white px-4 cursor-pointer transition
-                          ${active ? 'border-white/70' : 'border-white/70 hover:bg-gray-50'}`}
+                          ${active ? 'border-black/70' : 'border-gray-300 hover:bg-gray-50'}`}
             >
               {/* 왼쪽 토글 */}
               <span
