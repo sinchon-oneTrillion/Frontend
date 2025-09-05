@@ -25,20 +25,15 @@ export default function SelectView() {
             <li
               key={o.id}
               onClick={() => toggle(o.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) =>
-                (e.key === 'Enter' || e.key === ' ') && toggle(o.id)
-              }
-              className={`flex items-center gap-3 rounded-xl border p-4 transition cursor-pointer
+              className={`relative w-full cursor-pointer rounded-xl border p-4 transition
     ${active ? 'border-black bg-black/5' : 'border-gray-300 hover:bg-gray-50'}`}
             >
-              <span className="text-sm">{o.label}</span>
+              <span className="text-sm pr-10"> {o.label} </span>
 
               <span
-                aria-hidden
-                className={`ml-auto h-5 w-5 rounded-full border shrink-0
+                className={`absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full border
       ${active ? 'border-black bg-black' : 'border-gray-300 bg-white'}`}
+                aria-hidden
               />
             </li>
           );
@@ -58,7 +53,7 @@ export default function SelectView() {
               'onboarding_choices',
               JSON.stringify(selected)
             );
-            window.location.href = '/mypage';
+            window.location.href = '/';
           }}
           disabled={!selected.length}
           className={`h-12 w-36 rounded-lg text-white uppercase tracking-[0.2em] font-semibold ${

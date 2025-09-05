@@ -9,7 +9,7 @@ export default function Banner({ src, alt = 'Onboarding banner' }: Props) {
         className={[
           'w-full flex-shrink-0 object-cover object-center rounded-xl',
 
-          'aspect-[375/240]', // base
+          'aspect-[375/240]',
           'sm:aspect-[640/300]',
           'md:aspect-[768/340]',
           'lg:aspect-[1024/400]',
