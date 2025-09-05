@@ -15,16 +15,15 @@ const normalize = (s) => (s || '').replace(/\s+/g, '').trim();
 export default function Mypage() {
   const nicknameParam = localStorage.getItem('onboarding_nickname') || '';
 
-  const [nickname, setNickname] = useState(''); // 서버 닉네임 (없으면 빈문자)
-  const [origCards, setOrigCards] = useState([]); // 서버 원본(활성)
-  const [selected, setSelected] = useState([]); // 현재 UI 선택(토글)
+  const [nickname, setNickname] = useState('');
+  const [origCards, setOrigCards] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(''); // 에러 메시지(화면은 계속 렌더)
+  const [errorMsg, setErrorMsg] = useState(''); // 화면에는 표시하지 않지만 내부적으로만 사용
 
-  // ------- 초기 조회 -------
+  // 초기 조회
   useEffect(() => {
-    // 닉네임 자체가 없으면 API 호출 안 하고 UI만 렌더
     if (!nicknameParam) {
       setErrorMsg('닉네임 정보를 찾을 수 없어 임시로 [-]로 표시합니다.');
       setNickname('');
@@ -37,7 +36,7 @@ export default function Mypage() {
     (async () => {
       try {
         setLoading(true);
-        const data = await getMypage(nicknameParam); // 콘솔로그는 api 레이어에서 출력
+        const data = await getMypage(nicknameParam);
         setNickname(data?.nickname || '');
 
         const serverCards = Array.isArray(data?.cards) ? data.cards : [];
@@ -48,12 +47,10 @@ export default function Mypage() {
 
         setOrigCards(initSelected);
         setSelected(initSelected);
-        setErrorMsg(''); // 성공 시 에러 배너 제거
+        setErrorMsg('');
       } catch (e) {
-        // 실패해도 화면은 계속 보여줌
-        setErrorMsg(
-          e?.message || '마이페이지 조회 실패. 닉네임을 [-]로 표시합니다.'
-        );
+        // 실패해도 화면은 계속 렌더. 배너는 안 보임.
+        setErrorMsg(e?.message || '마이페이지 조회 실패.');
         setNickname('');
         setOrigCards([]);
         setSelected([]);
@@ -63,7 +60,7 @@ export default function Mypage() {
     })();
   }, [nicknameParam]);
 
-  // ------- 비교/토글 -------
+  // 비교/토글
   const selectedSet = useMemo(() => new Set(selected), [selected]);
   const origSet = useMemo(() => new Set(origCards), [origCards]);
 
@@ -82,11 +79,10 @@ export default function Mypage() {
       s.includes(label) ? s.filter((x) => x !== label) : [...s, label]
     );
 
-  // ------- 저장(수정 반영) -------
+  // 저장
   const save = async () => {
     if (saving) return;
 
-    // 닉네임이 없으면 저장 불가 (UI는 보이되, 저장 시 안내)
     if (!nicknameParam) {
       alert(
         '닉네임 정보가 없어 저장할 수 없습니다. 로그인/회원가입을 진행해 주세요.'
@@ -108,7 +104,7 @@ export default function Mypage() {
       console.log('remove_cards:', removeCards);
       console.groupEnd();
 
-      const data = await patchMypage(nicknameParam, addCards, removeCards); // 콘솔로그는 api 레이어에서 출력
+      const data = await patchMypage(nicknameParam, addCards, removeCards);
 
       const serverCards = Array.isArray(data?.cards) ? data.cards : [];
       const normalizedSet = new Set(serverCards.map(normalize));
@@ -127,7 +123,6 @@ export default function Mypage() {
     }
   };
 
-  // ------- UI -------
   if (loading) {
     return (
       <Container className="max-w-[720px] mx-auto">
@@ -138,23 +133,17 @@ export default function Mypage() {
 
   return (
     <Container className="max-w-[720px] mx-auto !pt-16 md:!pt-20">
-      에러/안내 배너 (있을 때만 표시)
-      {errorMsg && (
-        <div className="mb-4 rounded-md bg-yellow-50 text-yellow-800 px-3 py-2 text-sm">
-          {errorMsg}
-        </div>
-      )}
       <section className="-mt-2 mb-8">
         <h2 className="mb-2 text-base text-gray-700">닉네임</h2>
         <div className="text-[20px] font-light tracking-[0.25em] uppercase text-gray-400">
           {nickname && nickname.trim() ? nickname : '로그인을 해주세요'}
         </div>
       </section>
-      {/* 제목 */}
+
       <h3 className="mb-6 text-[18px] font-semibold whitespace-nowrap">
         내가 형성하고 싶은 습관 <span className="text-red-500">[수정하기]</span>
       </h3>
-      {/* 카드 리스트 */}
+
       <ul className="space-y-4">
         {ALL_CARDS.map((label) => {
           const active = selectedSet.has(label);
@@ -175,6 +164,7 @@ export default function Mypage() {
           );
         })}
       </ul>
+
       <div className="mt-12 flex items-center justify-center">
         <button
           type="button"

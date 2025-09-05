@@ -16,7 +16,7 @@ export default function Splash({ next = '/onboarding', duration = 2000 }) {
   }, [navigate, next, duration]);
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-white">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#FFF600]">
       <img src={logo} alt="saechi" className="w-90 h-90" />
     </div>
   );

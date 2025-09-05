@@ -9,7 +9,8 @@ export default function Landing() {
       <div className="flex items-center justify-center gap-4 mt-[30vh]">
         <button
           onClick={() => navigate('/onboarding/login')}
-          className="h-12 w-28 rounded-lg bg-gray-300 text-white font-semibold"
+          className="h-12 w-28 rounded-lg bg-white text-[#020202] font-semibold border border-blakc
+          "
         >
           로그인
         </button>

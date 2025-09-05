@@ -31,7 +31,7 @@ export default function NicknameForm({ mode = 'signup' }) {
   const [loading, setLoading] = useState(false);
   const uuid = useMemo(() => getUUID(), []);
 
-  const title = mode === 'signup' ? '닉네임으로 회원가입' : '닉네임으로 로그인';
+  const title = mode === 'signup' ? '회원가입' : '로그인';
   const buttonText = mode === 'signup' ? '회원가입' : '로그인';
 
   async function handleSubmit(e) {
@@ -95,14 +95,14 @@ export default function NicknameForm({ mode = 'signup' }) {
           <button
             type="button"
             onClick={() => navigate('/onboarding')}
-            className="h-12 w-36 rounded-lg bg-gray-300 text-white uppercase tracking-[0.2em] font-semibold"
+            className="h-[36px] w-[85px] rounded-lg bg-white text-[#020202] uppercase tracking-[0.2em] font-semibold border border-black"
           >
             뒤로
           </button>
           <button
             type="submit"
             disabled={!!error || nickname.trim().length < 2 || loading}
-            className={`h-12 w-36 rounded-lg text-white uppercase tracking-[0.2em] font-semibold ${
+            className={`h-[36px] w-[85px] rounded-lg bg-[#020202] text-white uppercase tracking-[0.2em] font-semibold ${
               !error && nickname.trim().length >= 2 && !loading
                 ? 'bg-black hover:opacity-90'
                 : 'bg-gray-400 cursor-not-allowed'
