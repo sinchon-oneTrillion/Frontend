@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ChevronLeftIcon from '../assets/icons/Calender_chevron-left-md.svg';
 import ChevronRightIcon from '../assets/icons/Calender_chevron-right-md.svg';
+import DeleteIcon from '../assets/icons/ModifyPage_Image_Delete.png';
 import DonutProgress from '../shared/components/DonutProgress';
+import {
+  getCards,
+  submitCardCompletion,
+  uploadImage,
+  createCalendarDetail,
+} from '../apis/calendar';
 
 function ModifyPage() {
   const { nickname, date } = useParams();
@@ -13,6 +20,7 @@ function ModifyPage() {
   const [loading, setLoading] = useState(false);
   const [cardData, setCardData] = useState([]);
   const [completedCards, setCompletedCards] = useState([]);
+  const containerRef = useRef(null);
 
   // 날짜 문자열을 Date 객체로
   const currentDate = new Date(date);
@@ -28,9 +36,7 @@ function ModifyPage() {
   // 카드 리스트 조회
   const fetchCardData = async () => {
     try {
-      const response = await fetch(`/api/main/cards/${nickname}`);
-      const data = await response.json();
-
+      const data = await getCards(nickname);
       if (data.status === 200) {
         setCardData(data.cards);
       }
@@ -53,19 +59,9 @@ function ModifyPage() {
   };
 
   // 카드 완료 등록 API 호출
-  const submitCardCompletion = async () => {
+  const handleCardCompletion = async () => {
     try {
-      const response = await fetch(`/api/main/check/${nickname}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cards: completedCards,
-        }),
-      });
-
-      const data = await response.json();
+      const data = await submitCardCompletion(nickname, completedCards);
       if (data.status !== 200) {
         console.error('카드 완료 등록 실패:', data.message);
       }
@@ -107,26 +103,14 @@ function ModifyPage() {
     }
   };
 
-  // 이미지 업로드 API 호출
-  const uploadImage = async (file) => {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    try {
-      const response = await fetch(`/calender/${nickname}/image`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-
-      if (data.status === 200) {
-        return data.image_url;
-      } else {
-        throw new Error(data.message || '이미지 업로드 실패');
-      }
-    } catch (error) {
-      console.error('이미지 업로드 실패:', error);
-      throw error;
+  // 이미지 삭제 핸들러
+  const handleImageDelete = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    // 파일 input 초기화
+    const fileInput = document.getElementById('image-upload');
+    if (fileInput) {
+      fileInput.value = '';
     }
   };
 
@@ -136,28 +120,23 @@ function ModifyPage() {
     try {
       let pictureUrl = null;
 
-      // 새 이미지가 있으면 업로드
+      // 새 이미지가 있으면 업로드 (삭제된 경우는 null로 전송)
       if (imageFile) {
-        pictureUrl = await uploadImage(imageFile);
+        const uploadData = await uploadImage(nickname, imageFile);
+        if (uploadData.status === 200) {
+          pictureUrl = uploadData.image_url;
+        }
       }
 
       // 카드 완료 등록
-      await submitCardCompletion();
+      await handleCardCompletion();
 
       // 캘린더 상세 등록
-      const response = await fetch(`/calendar/${nickname}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          picture: pictureUrl,
-          memo: memo,
-          date: date,
-        }),
+      const data = await createCalendarDetail(nickname, {
+        picture: pictureUrl, // null이면 이미지 없음으로 처리
+        memo: memo,
+        date: date,
       });
-
-      const data = await response.json();
 
       if (data.status === 201) {
         // 성공시 상세 페이지로 이동
@@ -184,105 +163,109 @@ function ModifyPage() {
     navigate('/calendar');
   };
 
+  // 자동 스크롤 기능
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let scrollDirection = 1; // 1: 아래로, -1: 위로
+    let isScrolling = true;
+
+    const autoScroll = () => {
+      if (!isScrolling) return;
+    };
+  }, []);
+
+  // ————————————————————————————————————————————————————————
+
   return (
-    <div className="min-h-screen bg-gray-100 py-10">
-      <div className="container mx-auto px-4 max-w-2xl">
-        {/* 헤더 */}
-        <div className="flex items-center justify-center mb-8">
-          <button
-            onClick={prevDate}
-            className="p-2 hover:bg-gray-200 rounded transition-colors cursor-pointer"
-            disabled={loading}
-          >
-            <img
-              src={ChevronLeftIcon}
-              alt="Previous Date"
-              className="w-5 h-5"
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-white py-10 overflow-y-auto hide-scrollbar"
+      style={{
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}
+    >
+      {/* 헤더 */}
+      <div className="flex items-center justify-center mb-2">
+        <button
+          onClick={prevDate}
+          className="p-2 hover:bg-gray-200 rounded transition-colors cursor-pointer"
+          disabled={loading}
+        >
+          <img src={ChevronLeftIcon} alt="Previous Date" className="w-5 h-5" />
+        </button>
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-black">{formatDate(date)}</h1>
+        </div>
+        <button
+          onClick={nextDate}
+          className="p-2 hover:bg-gray-200 rounded transition-colors cursor-pointer"
+          disabled={loading}
+        >
+          <img src={ChevronRightIcon} alt="Next Date" className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg p-6 space-y-3">
+        {/* 달성률 표시 */}
+        <div className="text-center">
+          <div className="relative inline-block">
+            <DonutProgress
+              percentage={calculateAchievementRate()}
+              size={90}
+              strokeWidth={15}
             />
-          </button>
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-black">{formatDate(date)}</h1>
           </div>
-          <button
-            onClick={nextDate}
-            className="p-2 hover:bg-gray-200 rounded transition-colors cursor-pointer"
-            disabled={loading}
-          >
-            <img src={ChevronRightIcon} alt="Next Date" className="w-5 h-5" />
-          </button>
+          <label className="block text-sm font-medium text-gray-700">
+            달성률
+          </label>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
-          {/* 달성률 표시 */}
-          <div className="text-center">
-            <div className="relative inline-block mb-4">
-              <DonutProgress
-                percentage={calculateAchievementRate()}
-                size={60}
-              />
-            </div>
-            <label className="block text-sm font-medium text-gray-700">
-              달성률: {calculateAchievementRate()}%
-            </label>
-          </div>
+        {/* 이미지 업로드란 */}
+        <div>
+          <div className="border-1 border-gray-800 h-70 max-h-70 rounded-lg p-5 text-center hover:border-gray-400 transition-colors relative mb-8 overflow-hidden">
+            {imagePreview ? (
+              <div className="h-full flex flex-col justify-between">
+                {/* 삭제 버튼 */}
+                <button
+                  onClick={handleImageDelete}
+                  className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors z-10"
+                  type="button"
+                >
+                  <img src={DeleteIcon} alt="이미지 삭제" className="w-5 h-5" />
+                </button>
 
-          {/* 카드 리스트 */}
-          <div>
-            <div className="space-y-3">
-              {cardData.map((card, index) => (
-                <div key={index} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`card-${index}`}
-                    checked={completedCards.includes(card)}
-                    onChange={() => toggleCardCompletion(card)}
-                    className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor={`card-${index}`}
-                    className={`text-sm ${
-                      completedCards.includes(card)
-                        ? 'line-through text-gray-500'
-                        : 'text-gray-700'
-                    }`}
-                  >
-                    {card}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 이미지 업로드란 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              사진
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              {imagePreview ? (
-                <div className="space-y-4">
+                {/* 이미지 영역 - 대부분의 공간 차지 */}
+                <div className="flex-1 flex items-center justify-center min-h-0">
                   <img
                     src={imagePreview}
                     alt="미리보기"
-                    className="mx-auto max-w-full max-h-100 rounded-lg"
+                    className="max-w-full max-h-full object-contain rounded-lg"
                   />
+                </div>
+
+                {/* 버튼 영역 - 하단 고정 */}
+                <div className="mt-3">
                   <button
                     onClick={() =>
                       document.getElementById('image-upload').click()
                     }
                     className="text-blue-500 hover:text-blue-600 text-sm"
+                    type="button"
                   >
                     다른 사진 선택
                   </button>
                 </div>
-              ) : (
-                <div
-                  className="cursor-pointer"
-                  onClick={() =>
-                    document.getElementById('image-upload').click()
-                  }
-                >
-                  <div className="mx-auto w-12 h-12 text-gray-400 mb-2">
+              </div>
+            ) : (
+              <div
+                className="cursor-pointer h-full flex items-center justify-center"
+                onClick={() => document.getElementById('image-upload').click()}
+              >
+                <div className="flex flex-col items-center justify-center">
+                  <div className="w-12 h-12 text-gray-400 mb-2">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
@@ -292,51 +275,47 @@ function ModifyPage() {
                       />
                     </svg>
                   </div>
-                  <p className="text-gray-500">사진올리기</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    클릭하여 이미지를 업로드하세요
-                  </p>
                 </div>
-              )}
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
-          </div>
-
-          {/* Text Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              오늘의 한마디
-            </label>
-            <textarea
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              className="w-full h-10 p-1 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              </div>
+            )}
+            <input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
             />
           </div>
+        </div>
 
-          {/* 버튼들 */}
-          <div className="flex justify-center pt-4">
-            <button
-              onClick={handleCancel}
-              className="px-6 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
-              disabled={loading}
-            >
-              취소
-            </button>
-            <button
-              onClick={handleConfirm}
-              className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors ml-4"
-              disabled={loading}
-            >
-              {loading ? '저장 중...' : '확인'}
-            </button>
-          </div>
+        {/* Text Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            오늘의 한마디
+          </label>
+          <textarea
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            className="w-full h-10 p-1 border border-gray-800 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+        </div>
+
+        {/* 버튼들 */}
+        <div className="flex justify-center pt-4 mt-5">
+          <button
+            onClick={handleCancel}
+            className="px-6 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+            disabled={loading}
+          >
+            취소
+          </button>
+          <button
+            onClick={handleConfirm}
+            className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors ml-4"
+            disabled={loading}
+          >
+            {loading ? '저장 중...' : '확인'}
+          </button>
         </div>
       </div>
     </div>

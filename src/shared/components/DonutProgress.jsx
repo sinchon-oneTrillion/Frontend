@@ -1,7 +1,7 @@
 import React from 'react';
 
-const DonutProgress = ({ percentage, size = 24 }) => {
-  const radius = (size - 4) / 2;
+const DonutProgress = ({ percentage, size = 24, strokeWidth = 2 }) => {
+  const radius = (size - strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -15,7 +15,7 @@ const DonutProgress = ({ percentage, size = 24 }) => {
           cy={size / 2}
           r={radius}
           stroke="rgba(156, 163, 175, 0.3)"
-          strokeWidth="5"
+          strokeWidth={strokeWidth}
           fill="transparent"
         />
         {/* 진행률 원 */}
@@ -30,7 +30,7 @@ const DonutProgress = ({ percentage, size = 24 }) => {
                 ? '#F59E0B'
                 : '#EF4444'
           }
-          strokeWidth="2"
+          strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={strokeDasharray}
           strokeDashoffset={strokeDashoffset}

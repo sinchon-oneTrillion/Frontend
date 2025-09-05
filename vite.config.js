@@ -7,5 +7,22 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 3000,
+    proxy: {
+      '/api': {
+        target: 'https://saechi.shop',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/calendar': {
+        target: 'https://saechi.shop',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/calender': {
+        target: 'https://saechi.shop',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 });
