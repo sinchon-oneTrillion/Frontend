@@ -40,6 +40,10 @@ export default function NicknameForm({ mode = 'signup' }) {
     const nn = nickname.trim();
     localStorage.setItem('auth_mode', mode);
     localStorage.setItem('onboarding_nickname', nn);
+    if (mode === 'signup') {
+      localStorage.removeItem('onboarding_choices');
+    }
+
     const nextPath = mode === 'login' ? '/main' : '/onboarding/select';
     setTimeout(() => navigate(nextPath), 100);
   }
