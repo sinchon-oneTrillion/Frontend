@@ -7,8 +7,8 @@ function CalendarPage() {
   const [nickname] = useState('abcde'); // 실제 앱에서는 context나 props로 받아올듯?
 
   const handleDateClick = (dateString) => {
-    // ModifyPage로 이동
-    navigate(`/calendar/modify/${nickname}/${dateString}`);
+    // CreatePage로 이동 (새로운 캘린더 데이터 생성)
+    navigate(`/calendar/create/${nickname}/${dateString}`);
   };
 
   return (
