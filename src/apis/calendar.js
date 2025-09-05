@@ -26,7 +26,7 @@ export const uploadImage = async (nickname, imageFile) => {
   const formData = new FormData();
   formData.append('image', imageFile);
 
-  const response = await api.post(`/calender/${nickname}/image`, formData, {
+  const response = await api.post(`/calendar/${nickname}/image`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -42,7 +42,7 @@ export const createCalendarDetail = async (nickname, data) => {
 
 // 캘린더 상세 조회
 export const getCalendarDetail = async (nickname, date) => {
-  const response = await api.get(`/calender/${nickname}/${date}`);
+  const response = await api.get(`/calendar/${nickname}/${date}`);
   return response.data;
 };
 
@@ -52,8 +52,8 @@ export const getCalendarMonth = async (nickname, month) => {
   return response.data;
 };
 
-// 캘린더 상세 수정
+// 캘린더 상세 수정 (PATCH)
 export const updateCalendarDetail = async (nickname, date, data) => {
-  const response = await api.put(`/calendar/${nickname}/${date}`, data);
+  const response = await api.patch(`/calendar/${nickname}/${date}`, data);
   return response.data;
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import ChevronLeftIcon from '../assets/icons/Calender_chevron-left-md.svg';
 import ChevronRightIcon from '../assets/icons/Calender_chevron-right-md.svg';
 import DeleteIcon from '../assets/icons/ModifyPage_Image_Delete.png';
@@ -8,21 +8,18 @@ import {
   getCards,
   submitCardCompletion,
   uploadImage,
-  updateCalendarDetail,
-  getCalendarDetail,
+  createCalendarDetail,
 } from '../apis/calendar';
 
-function ModifyPage() {
+function CreatePage() {
   const { nickname, date } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const [memo, setMemo] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cardData, setCardData] = useState([]);
   const [completedCards, setCompletedCards] = useState([]);
-  const [existingData, setExistingData] = useState(null);
   const containerRef = useRef(null);
 
   // 날짜 문자열을 Date 객체로
@@ -34,22 +31,6 @@ function ModifyPage() {
     const month = date.getMonth() + 1; // 0부터 시작하므로 +1
     const day = date.getDate();
     return `${month}/${day}`;
-  };
-
-  // 기존 캘린더 데이터 조회
-  const fetchExistingData = async () => {
-    try {
-      const data = await getCalendarDetail(nickname, date);
-      if (data.status === 201) {
-        setExistingData(data);
-        setMemo(data.memo || '');
-        if (data.picture) {
-          setImagePreview(data.picture);
-        }
-      }
-    } catch (error) {
-      console.error('기존 데이터 조회 실패:', error);
-    }
   };
 
   // 카드 리스트 조회
@@ -91,24 +72,14 @@ function ModifyPage() {
 
   useEffect(() => {
     fetchCardData();
-    // location.state에 데이터가 있으면 사용, 없으면 API 호출
-    if (location.state) {
-      setExistingData(location.state);
-      setMemo(location.state.memo || '');
-      if (location.state.picture) {
-        setImagePreview(location.state.picture);
-      }
-    } else {
-      fetchExistingData();
-    }
-  }, [nickname, date]);
+  }, [nickname]);
 
   // 전날 이동
   const prevDate = () => {
     const prevDay = new Date(currentDate);
     prevDay.setDate(prevDay.getDate() - 1);
     const prevDateString = prevDay.toISOString().split('T')[0];
-    navigate(`/calendar/modify/${nickname}/${prevDateString}`);
+    navigate(`/calendar/create/${nickname}/${prevDateString}`);
   };
 
   // 다음날 이동
@@ -116,7 +87,7 @@ function ModifyPage() {
     const nextDay = new Date(currentDate);
     nextDay.setDate(nextDay.getDate() + 1);
     const nextDateString = nextDay.toISOString().split('T')[0];
-    navigate(`/calendar/modify/${nickname}/${nextDateString}`);
+    navigate(`/calendar/create/${nickname}/${nextDateString}`);
   };
 
   // 이미지 파일 선택 핸들러
@@ -143,13 +114,13 @@ function ModifyPage() {
     }
   };
 
-  // 확인 버튼 클릭 핸들러 (수정)
+  // 확인 버튼 클릭 핸들러 (등록)
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      let pictureUrl = imagePreview; // 기존 이미지 유지
+      let pictureUrl = null;
 
-      // 새 이미지가 있으면 업로드
+      // 새 이미지가 있으면 업로드 (삭제된 경우는 null로 전송)
       if (imageFile) {
         const uploadData = await uploadImage(nickname, imageFile);
         if (uploadData.status === 200) {
@@ -160,10 +131,11 @@ function ModifyPage() {
       // 카드 완료 등록
       await handleCardCompletion();
 
-      // 캘린더 상세 수정 (PATCH /calendar/{nickname}/{date})
-      const data = await updateCalendarDetail(nickname, date, {
-        picture: pictureUrl,
+      // 캘린더 상세 등록 (POST /calendar/{nickname})
+      const data = await createCalendarDetail(nickname, {
+        picture: pictureUrl, // null이면 이미지 없음으로 처리
         memo: memo,
+        date: date,
       });
 
       if (data.status === 201) {
@@ -176,11 +148,11 @@ function ModifyPage() {
           },
         });
       } else {
-        alert(data.message || '수정에 실패했습니다.');
+        alert(data.message || '저장에 실패했습니다.');
       }
     } catch (error) {
-      console.error('수정 실패:', error);
-      alert('수정 중 오류가 발생했습니다.');
+      console.error('저장 실패:', error);
+      alert('저장 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -188,7 +160,7 @@ function ModifyPage() {
 
   // 취소 버튼 클릭 핸들러
   const handleCancel = () => {
-    navigate(`/calendar/detail/${nickname}/${date}`);
+    navigate('/calendar');
   };
 
   // 자동 스크롤 기능
@@ -342,7 +314,7 @@ function ModifyPage() {
             className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors ml-4"
             disabled={loading}
           >
-            {loading ? '수정 중...' : '확인'}
+            {loading ? '저장 중...' : '확인'}
           </button>
         </div>
       </div>
@@ -350,4 +322,4 @@ function ModifyPage() {
   );
 }
 
-export default ModifyPage;
+export default CreatePage;
