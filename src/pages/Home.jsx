@@ -20,14 +20,14 @@ export const Home = () => {
     const formattedDate = `${month}/${day}`;
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-gray-300 space-y-6 pt-20">
+    <div className="flex flex-col items-center h-full bg-gray-300 overflow-hidden">
       {/* 실천 n일째 박스 */}
-      <div className="w-[200px] h-[25px] bg-white border rounded-md shadow flex items-center justify-center">
-        <span className="text-sm font-medium">실천 n일째</span>
+      <div className="w-[250px] h-[30px] bg-white border rounded-md shadow flex items-center justify-center mt-6">
+        <span className="text-lg font-medium">우리, 오늘도 머리를 지켜봐요!</span>
       </div>
 
       {/* Today */}
-      <div className="mt-auto flex flex-col items-center space-y-4">
+      <div className="flex flex-col items-center space-y-4 mt-auto mb-0">
         <div className="flex flex-col items-center text-lg font-semibold">
         Today
         <div className="text-black text-sm">{formattedDate}</div>

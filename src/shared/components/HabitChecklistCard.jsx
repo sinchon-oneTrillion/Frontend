@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getHabitCards } from '../../apis/home';
 
 const imgRadioBase = "http://localhost:3845/assets/13fe777cd0f71483e930b356d82512fc8e0b1e3b.svg";
 const imgRadioDot = "http://localhost:3845/assets/89f47b654e0d2e8c8d2fefec52602ce7d519887e.svg";
@@ -22,13 +23,35 @@ const RadioButton = ({ checked, onClick }) => {
 };
 
 export const HabitchecklistCard = ({ onClose }) => {
-  const mockData = [
-    { id: 1, title: '충분한 수면 취하기 (7-8시간)', completed: true },
-    { id: 2, title: '규칙적인 운동하기', completed: true },
-    { id: 3, title: '스트레스 관리하기', completed: false }
-  ];
+  const [habits, setHabits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // 실제 로그인 시스템에서 nickname 가져오기
+  const nickname = "사용자닉네임";
 
-  const [habits, setHabits] = useState(mockData);
+  useEffect(() => {
+    const fetchHabits = async () => {
+      try {
+        const data = await getHabitCards(nickname);
+        const { cards } = data;
+        
+        const habitsData = cards.map((card, index) => ({
+          id: index + 1,
+          title: card,
+          completed: false
+        }));
+        
+        setHabits(habitsData);
+      } catch (error) {
+        // 에러 시 빈 배열로 설정
+        setHabits([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHabits();
+  }, [nickname]);
 
   const handleHabitToggle = (id) => {
     setHabits(prevHabits => 
@@ -39,9 +62,12 @@ export const HabitchecklistCard = ({ onClose }) => {
   };
 
   const handleSubmit = () => {
-    // Handle submit logic here
-    console.log('Submitted habits:', habits);
-    onClose();
+    const allCompleted = habits.every(habit => habit.completed);
+    
+    if (allCompleted && habits.length > 0) {
+      alert('오늘도 수고하셨습니다!');
+      onClose();
+    }
   };
 
   const handleOverlayClick = (e) => {
@@ -49,6 +75,17 @@ export const HabitchecklistCard = ({ onClose }) => {
       onClose();
     }
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="bg-white box-border content-stretch flex flex-col gap-[30px] items-center justify-center px-[23px] py-11 relative">
+          <div aria-hidden="true" className="absolute border border-black border-solid inset-0 pointer-events-none" />
+          <div className="text-[#212121] text-sm">로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 

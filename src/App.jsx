@@ -1,8 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
-
 import { Layout } from './shared/components/layouts/Layout';
-
 import { Home } from './pages/Home';
 import OnboardingLayout from './pages/onboarding/Layout';
 import OnboardingIndex from './pages/onboarding/index';
@@ -14,10 +12,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/onboarding" element={<OnboardingLayout />}>
-            <Route index element={<OnboardingIndex />} />
-            <Route path="select" element={<SelectView />} />
+          <Route index element={<OnboardingIndex />} />
+          <Route path="select" element={<SelectView />} />
           </Route>
           {/* <Route path="/mypage" element={<Mypage />} /> */}
           <Route path="*" element={<div>Not Found</div>} />
@@ -26,4 +24,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-export default App;
