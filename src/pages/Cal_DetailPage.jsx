@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import DonutProgress from '../shared/components/DonutProgress';
+import { getCards, getCalendarDetail } from '../apis/calendar';
 
 function DetailPage() {
   const { nickname, date } = useParams();
@@ -15,9 +16,7 @@ function DetailPage() {
   // 카드 리스트 조회
   const fetchCardData = async () => {
     try {
-      const response = await fetch(`/api/main/cards/${nickname}`);
-      const data = await response.json();
-
+      const data = await getCards(nickname);
       if (data.status === 200) {
         setCardData(data.cards);
       }
@@ -31,21 +30,21 @@ function DetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/calender/${nickname}/${date}`);
-      const data = await response.json();
-
+      const data = await getCalendarDetail(nickname, date);
       if (data.status === 201) {
         setDetailData(data);
         // 달성률도 함께 가져온다고 가정
         setAchievementRate(data.achievement_rate || 0);
-      } else if (response.status === 404) {
-        setError('조회할 데이터가 없습니다.');
       } else {
         setError(data.message || '데이터를 불러올 수 없습니다.');
       }
     } catch (error) {
       console.error('상세 데이터 조회 실패:', error);
-      setError('서버 오류가 발생했습니다.');
+      if (error.response?.status === 404) {
+        setError('조회할 데이터가 없습니다.');
+      } else {
+        setError('서버 오류가 발생했습니다.');
+      }
     } finally {
       setLoading(false);
     }
