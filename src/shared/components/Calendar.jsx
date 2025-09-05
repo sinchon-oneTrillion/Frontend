@@ -50,7 +50,33 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
       }
     } catch (error) {
       console.error('캘린더 데이터조회 실패:', error);
-      setError('서버 오류가 발생했습니다');
+
+      // —————————————————————— Mock Data ———————————————————————
+
+      if (
+        error.response?.status === 404 ||
+        error.code === 'ERR_BAD_REQUEST' ||
+        error.code === 'ERR_NETWORK'
+      ) {
+        console.log('백엔드 연결 실패, Mock Data 사용');
+        setCalendarData([
+          {
+            date: '2025-09-01',
+            has_picture: false,
+            has_memo: true,
+            achivement_rate: 50,
+          },
+          {
+            date: '2025-09-06',
+            has_picture: true,
+            has_memo: true,
+            achivement_rate: 75,
+          },
+        ]);
+        setError(null); // 에러 상태 클리어
+      } else {
+        setError('서버 오류가 발생했습니다');
+      }
     } finally {
       setLoading(false);
     }
@@ -70,8 +96,9 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
   // 날짜 클릭 핸들러
   const handleDateClick = (day) => {
     const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateData = getDateData(day); // 해당 날짜의 데이터 가져오기
     if (onDateClick) {
-      onDateClick(dateString);
+      onDateClick(dateString, dateData); // dateData도 함께 전달
     }
   };
 
@@ -94,8 +121,8 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
   return (
     <div className="w-full max-w-md mx-auto bg-white border border-black-500 rounded-lg relative">
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-medium text-gray-900">{monthYear}</h2>
+      <div className="flex items-center justify-between px-6  mt-6 border-b border-gray-200">
+        <h2 className="text-xl font-bold text-gray-900">{monthYear}</h2>
         <div className="flex items-center space-x-2">
           <button
             onClick={prevMonth}
@@ -117,13 +144,6 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
           </button>
         </div>
       </div>
-
-      {/* 에러 메시지 */}
-      {error && (
-        <div className="px-4 py-2 bg-red-50 border-b border-red-200">
-          <p className="text-sm">{error}</p>
-        </div>
-      )}
 
       {/* 캘린더 그리드 */}
       <div className="p-4">
@@ -156,9 +176,8 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
                 key={idx}
                 onClick={() => day && handleDateClick(day)}
                 className={`
-                  h-16 flex items-center justify-center text-base cursor-pointer rounded relative
+                  h-18 flex items-center justify-center text-base cursor-pointer rounded relative
                   ${day ? 'hover:bg-gray-200' : ''}
-                  ${isToday ? 'bg-gray-200 text-gray-900 font-medium' : ''}
                   ${day ? 'text-gray-900' : ''}
                   ${loading ? 'opacity-50' : ''}
                 `}
@@ -167,34 +186,19 @@ function Calendar({ nickname = 'abcde', onDateClick }) {
                   <div className="relative w-full h-full flex items-center justify-center">
                     <span
                       className={`
-                        ${isToday ? 'text-gray-900' : ''} 
+                        ${isToday ? 'bg-[#FFF600] text-gray-900 font-bold px-2 py-1 rounded' : ''} 
                         ${dateData && (dateData.has_memo || dateData.has_picture) ? 'text-yellow-600 font-bold' : ''}
                       `}
                     >
                       {day}
                     </span>
 
-                    {/* API 데이터 기반 인디케이터 */}
-                    {dateData && (
-                      <>
-                        {/* 메모/이미지 작은 점 표시 */}
-                        <div className="absolute top-1 right-1 flex space-x-1">
-                          {dateData.has_memo && (
-                            <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
-                          )}
-                          {dateData.has_picture && (
-                            <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
-                          )}
-                        </div>
-                      </>
-                    )}
-
                     {/* 달성률 도넛 차트 */}
-                    <div className="absolute -bottom-4 -right-0.1">
+                    <div className="absolute -bottom-3 -right-0.1">
                       <DonutProgress
                         percentage={progressPercentage}
-                        size={30}
-                        strokeWidth={6}
+                        size={40}
+                        strokeWidth={8}
                       />
                     </div>
                   </div>

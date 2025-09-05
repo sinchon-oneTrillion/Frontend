@@ -4,6 +4,7 @@ import ChevronLeftIcon from '../assets/icons/Calender_chevron-left-md.svg';
 import ChevronRightIcon from '../assets/icons/Calender_chevron-right-md.svg';
 import DeleteIcon from '../assets/icons/ModifyPage_Image_Delete.png';
 import DonutProgress from '../shared/components/DonutProgress';
+import UploadPhotoIcon from '../assets/icons/UploadPage_photo.svg';
 import {
   getCards,
   submitCardCompletion,
@@ -253,7 +254,7 @@ function ModifyPage() {
 
         {/* 이미지 업로드란 */}
         <div>
-          <div className="border-1 border-gray-800 h-70 max-h-70 rounded-lg p-5 text-center hover:border-gray-400 transition-colors relative mb-8 overflow-hidden">
+          <div className="border-1 border-gray-800 h-70 max-h-70 rounded-lg p-5 text-center hover:border-gray-400 transition-colors relative mb-8 overflow-hidden bg-[#E2E2E2]">
             {imagePreview ? (
               <div className="h-full flex flex-col justify-between">
                 {/* 삭제 버튼 */}
@@ -265,16 +266,15 @@ function ModifyPage() {
                   <img src={DeleteIcon} alt="이미지 삭제" className="w-5 h-5" />
                 </button>
 
-                {/* 이미지 영역 - 대부분의 공간 차지 */}
+                {/* 이미지 영역  */}
                 <div className="flex-1 flex items-center justify-center min-h-0">
                   <img
                     src={imagePreview}
-                    alt="미리보기"
                     className="max-w-full max-h-full object-contain rounded-lg"
                   />
                 </div>
 
-                {/* 버튼 영역 - 하단 고정 */}
+                {/* 버튼으로 구현함 - 하단 고정 */}
                 <div className="mt-3">
                   <button
                     onClick={() =>
@@ -294,14 +294,11 @@ function ModifyPage() {
               >
                 <div className="flex flex-col items-center justify-center">
                   <div className="w-12 h-12 text-gray-400 mb-2">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
+                    <img
+                      src={UploadPhotoIcon}
+                      alt="Upload Photo"
+                      className="w-12 h-12"
+                    />
                   </div>
                 </div>
               </div>
