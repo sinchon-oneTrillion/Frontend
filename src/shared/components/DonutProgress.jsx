@@ -24,11 +24,7 @@ const DonutProgress = ({ percentage, size = 24, strokeWidth = 2 }) => {
           cy={size / 2}
           r={radius}
           stroke={
-            percentage >= 80
-              ? '#10B981'
-              : percentage >= 50
-                ? '#F59E0B'
-                : '#EF4444'
+            percentage >= 80 ? '#000' : percentage >= 50 ? '#000' : '#000'
           }
           strokeWidth={strokeWidth}
           fill="transparent"
