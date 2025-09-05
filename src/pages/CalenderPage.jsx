@@ -1,7 +1,7 @@
 import React from 'react';
-import Calendar from '../components/Calender';
+import Calendar from '../shared/components/Calendar';
 
-function CalenderPage() {
+function CalendarPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-10">
       <Calendar />
@@ -9,4 +9,4 @@ function CalenderPage() {
   );
 }
 
-export default CalenderPage;
+export default CalendarPage;
