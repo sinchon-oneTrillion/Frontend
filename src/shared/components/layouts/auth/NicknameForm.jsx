@@ -44,7 +44,7 @@ export default function NicknameForm({ mode = 'signup' }) {
       localStorage.removeItem('onboarding_choices');
     }
 
-    const nextPath = mode === 'login' ? '/main' : '/onboarding/select';
+    const nextPath = mode === 'login' ? '/home' : '/onboarding/select';
     setTimeout(() => navigate(nextPath), 100);
   }
 

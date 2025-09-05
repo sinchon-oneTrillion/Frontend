@@ -22,7 +22,7 @@ export default function SelectView() {
 
   function saveAndGo() {
     localStorage.setItem('onboarding_choices', JSON.stringify(selected));
-    navigate('/main');
+    navigate('/home');
   }
 
   return (
