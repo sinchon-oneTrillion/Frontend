@@ -137,15 +137,14 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
       {habits.map((habit) => (
         <div 
           key={habit.id}
-          className=" content-stretch flex gap-2.5 h-[59px] items-center justify-start px-3.5 py-[17px] relative shrink-0 w-60 cursor-pointer"
+          className="content-stretch flex h-[59px] items-center px-3.5 py-[17px] relative shrink-0 w-60 cursor-pointer"
           onClick={() => handleHabitToggle(habit.id)}
         >
-          <div className="content-stretch flex gap-3 items-center justify-start relative shrink-0">
-            <RadioButton 
-              checked={habit.completed}
-              onClick={() => handleHabitToggle(habit.id)}
-            />
-            <span className="flex-1" style={{
+          <RadioButton 
+            checked={habit.completed}
+            onClick={() => handleHabitToggle(habit.id)}
+          />
+          <span className="flex-1 text-center" style={{
               color: '#080000',
               fontFeatureSettings: '"liga" off, "clig" off',
               fontFamily: 'Roboto',
@@ -158,7 +157,6 @@ export const HabitchecklistCard = ({ onClose, onComplete }) => {
             }}>
               {habit.title}
             </span>
-          </div>
         </div>
       ))}
 

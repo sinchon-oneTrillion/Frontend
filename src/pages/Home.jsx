@@ -34,6 +34,9 @@ export const Home = () => {
   };
 
   const handleHabitsCompleted = async () => {
+    setIsCompleted(true);
+    setShowPopup(false);
+    
     try {
       const data = await getHomeStatus(nickname);
       if (data && typeof data.is_achieved === 'boolean') {
@@ -41,9 +44,7 @@ export const Home = () => {
       }
     } catch (error) {
       console.log('홈 상태 업데이트 실패:', error);
-      setIsCompleted(true);
     }
-    setShowPopup(false);
   };
 
   // 랜덤 격려글 배열
